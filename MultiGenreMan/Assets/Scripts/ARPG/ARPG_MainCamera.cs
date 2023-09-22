@@ -5,11 +5,17 @@ using UnityEngine;
 public class ARPG_MainCamera : MonoBehaviour
 {
     [SerializeField, Range(5, 20)]
-    private int _xOffset = 5;
+    private float _xOffset = 5;
     [SerializeField, Range(5, 20)]
-    private int _yOffset = 5;
+    private float _yOffset = 5;
     [SerializeField, Range(5, 20)]
-    private int _zOffset = 5;
+    private float _zOffset = 5;
+
+    [SerializeField]
+    private float _zoomSpeed = 5;
+
+    [SerializeField]
+    private float _distanceFromTarget;
 
     private Vector3 _offset = Vector3.zero;
 
@@ -38,6 +44,7 @@ public class ARPG_MainCamera : MonoBehaviour
         _offset = new Vector3(-_xOffset, _yOffset, -_zOffset);
 
         transform.position += _offset;
+        _distanceFromTarget = _offset.magnitude;
 
         transform.LookAt(_playerObject.position);
 
@@ -80,15 +87,42 @@ public class ARPG_MainCamera : MonoBehaviour
 
         }
 
+        _distanceFromTarget = Vector3.Distance(_playerObject.position, transform.position);
+
+        Vector3 directionToTarget = _playerObject.position - transform.position;
+
+        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+
+        _offset *= (1 - (scrollInput * _zoomSpeed) / _offset.magnitude); //shortens or makes the offset vector bigger
+
+        
+
+        if (_distanceFromTarget >= 5 && _distanceFromTarget <= 30) transform.position = _playerObject.position + _offset;
+        if (_distanceFromTarget > 30)
+        {
+            _offset = _offset.normalized * 30;
+            transform.position = _playerObject.position + _offset;
+        }
+        if (_distanceFromTarget < 5)
+        {
+            _offset = _offset.normalized * 5;
+            transform.position = _playerObject.position + _offset;
+        }
+
+
+
+
+
+
 
     }
 
     private void UpdateCameraPositon()
     {
 
-        _offset = new Vector3(-_xOffset, _yOffset, -_zOffset);
+        //_offset = new Vector3(-_xOffset, _yOffset, -_zOffset);
 
-        transform.position = _playerObject.position + _offset;
+       // transform.position = _playerObject.position + _offset;
         transform.LookAt(_playerObject.position);
     }
 

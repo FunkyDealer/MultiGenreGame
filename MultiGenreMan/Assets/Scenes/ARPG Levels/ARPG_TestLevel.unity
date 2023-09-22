@@ -597,6 +597,8 @@ MonoBehaviour:
   _xOffset: 12
   _yOffset: 20
   _zOffset: 11
+  _zoomSpeed: 8
+  _distanceFromTarget: 0
   _playerObject: {fileID: 1894064199003632814}
   _cursorIndicator: {fileID: 1127103603}
 --- !u!1 &1664191466
