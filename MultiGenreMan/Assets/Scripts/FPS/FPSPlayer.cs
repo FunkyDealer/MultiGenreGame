@@ -186,7 +186,7 @@ public class FPSPlayer : FPS_Creature
         Vector3 cameraForward = _cameraTransform.forward; 
         cameraForward.y = 0;
 
-        float dirY = _myRigidBody.velocity.y;
+        float dirY = _myRigidBody.velocity.y; //conserve y speed so that fall speed is always the same
         //create movement vectors
         Vector3 horizontalDir = _cameraTransform.right * _movementInput.x;
         Vector3 verticalDir =  cameraForward * _movementInput.y;

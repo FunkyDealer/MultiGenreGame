@@ -59,16 +59,38 @@ public class ARPG_MainCamera : MonoBehaviour
         UpdateCameraPositon();
 
 
-       
+
+
+
+        IssuePlayerOrder();
+
+
+
+        ZoomCamera();
 
 
 
 
+
+    }
+
+    private void UpdateCameraPositon()
+    {
+
+        //_offset = new Vector3(-_xOffset, _yOffset, -_zOffset);
+
+        // transform.position = _playerObject.position + _offset;
+        transform.position = _playerObject.position + _offset;
+        transform.LookAt(_playerObject.position);
+    }
+
+    private void IssuePlayerOrder()
+    {
         if (Input.GetButtonDown("Fire2"))
         {
             Vector3 newPos = _playerObject.position;
 
-           // Vector3 mouseScreenPos = Input.mousePosition;
+            // Vector3 mouseScreenPos = Input.mousePosition;
             //mouseScreenPos.z = _myCamera.nearClipPlane;
             //Vector3 mouseWorldPos = _myCamera.ScreenToWorldPoint(mouseScreenPos);
 
@@ -83,50 +105,41 @@ public class ARPG_MainCamera : MonoBehaviour
 
             _cursorIndicator.transform.position = newPos;
 
+            //issue order
+            ARPG_PlayerOrder order = new ARPG_PlayerOrder(newPos);
 
+            _player.ReceiveOrder(order);
 
         }
+    }
 
-        _distanceFromTarget = Vector3.Distance(_playerObject.position, transform.position);
-
-        Vector3 directionToTarget = _playerObject.position - transform.position;
-
+    private void ZoomCamera()
+    {
         float scrollInput = Input.GetAxis("Mouse ScrollWheel");
 
-        _offset *= (1 - (scrollInput * _zoomSpeed) / _offset.magnitude); //shortens or makes the offset vector bigger
-
-        
-
-        if (_distanceFromTarget >= 5 && _distanceFromTarget <= 30) transform.position = _playerObject.position + _offset;
-        if (_distanceFromTarget > 30)
+        if (scrollInput != 0)
         {
-            _offset = _offset.normalized * 30;
-            transform.position = _playerObject.position + _offset;
+            _distanceFromTarget = Vector3.Distance(_playerObject.position, transform.position);
+
+            Vector3 directionToTarget = _playerObject.position - transform.position;
+
+
+            _offset *= (1 - (scrollInput * _zoomSpeed) / _offset.magnitude); //shortens or makes the offset vector bigger
+
+
+            if (_distanceFromTarget >= 5 && _distanceFromTarget <= 30) transform.position = _playerObject.position + _offset;
+            if (_distanceFromTarget > 30)
+            {
+                _offset = _offset.normalized * 30;
+                transform.position = _playerObject.position + _offset;
+            }
+            if (_distanceFromTarget < 5)
+            {
+                _offset = _offset.normalized * 5;
+                transform.position = _playerObject.position + _offset;
+            }
         }
-        if (_distanceFromTarget < 5)
-        {
-            _offset = _offset.normalized * 5;
-            transform.position = _playerObject.position + _offset;
-        }
-
-
-
-
-
-
-
     }
-
-    private void UpdateCameraPositon()
-    {
-
-        //_offset = new Vector3(-_xOffset, _yOffset, -_zOffset);
-
-       // transform.position = _playerObject.position + _offset;
-        transform.LookAt(_playerObject.position);
-    }
-
-
 
 
 

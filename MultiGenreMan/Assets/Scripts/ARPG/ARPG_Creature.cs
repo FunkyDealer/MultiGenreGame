@@ -12,9 +12,13 @@ public class ARPG_Creature : MonoBehaviour
     [SerializeField]
     protected float _moveSpeed;
 
+    protected Rigidbody _myRigidBody;
+
 
     protected virtual void Awake()
     {
+        _myRigidBody = GetComponent<Rigidbody>();
+
 
     }
 
