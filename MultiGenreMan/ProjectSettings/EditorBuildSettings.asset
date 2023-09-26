@@ -4,5 +4,14 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 7a21856617009704ab67738b7fa87be7
+  - enabled: 1
+    path: Assets/Scenes/FPSLevels/FPSTestLevel.unity
+    guid: b04d59b15fae08745afa52cf5da2b30c
+  - enabled: 1
+    path: Assets/Scenes/ARPG Levels/ARPG_TestLevel.unity
+    guid: c297e7369646107449fe572806e9330b
   m_configObjects: {}

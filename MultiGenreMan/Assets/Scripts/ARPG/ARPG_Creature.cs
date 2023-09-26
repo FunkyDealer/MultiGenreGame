@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class ARPG_Creature : MonoBehaviour
 {
@@ -11,13 +12,19 @@ public class ARPG_Creature : MonoBehaviour
 
     [SerializeField]
     protected float _moveSpeed;
+    [SerializeField]
+    protected float _turnSpeed = 200f;
+
+    [SerializeField]
+    protected float _attackRange;
 
     protected Rigidbody _myRigidBody;
-
+    protected NavMeshAgent _myNavMeshAgent;
 
     protected virtual void Awake()
     {
         _myRigidBody = GetComponent<Rigidbody>();
+        _myNavMeshAgent = GetComponent<NavMeshAgent>(); 
 
 
     }
@@ -25,7 +32,7 @@ public class ARPG_Creature : MonoBehaviour
     // Start is called before the first frame update
     protected virtual void Start()
     {
-        
+        _currentHealth = _maxHealth;
     }
 
     // Update is called once per frame
@@ -40,11 +47,14 @@ public class ARPG_Creature : MonoBehaviour
     }
 
 
-    protected virtual void ReceiveDamage(int damage)
+    public virtual void ReceiveDamage(int damage)
     {
+        Debug.Log($"Current health: {_currentHealth}");
+        Debug.Log($"received {damage} damage");
         _currentHealth -= damage;
-        if (_currentHealth < 0)
+        if (_currentHealth <= 0)
         {
+            Debug.Log($"Current health: {_currentHealth}");
             _currentHealth = 0;
             Destroy(gameObject);
         }

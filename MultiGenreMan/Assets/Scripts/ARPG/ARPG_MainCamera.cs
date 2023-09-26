@@ -98,15 +98,36 @@ public class ARPG_MainCamera : MonoBehaviour
             Ray ray = _myCamera.ScreenPointToRay(Input.mousePosition);
 
             RaycastHit hit;
+            ARPG_Creature creature = null;
             if (Physics.Raycast(ray, out hit, 100))
             {
                 newPos = hit.point;
+
+                creature = hit.collider.gameObject.GetComponent<ARPG_Creature>();
+
+            } 
+            else
+            {
+
             }
+            ARPG_PlayerOrder order = new ARPG_PlayerOrder();
 
-            _cursorIndicator.transform.position = newPos;
+            if (creature != null)
+            {
 
-            //issue order
-            ARPG_PlayerOrder order = new ARPG_PlayerOrder(newPos);
+                if (creature is ARPG_Enemy) order = new ARPG_PlayerAttackOrder(creature);               
+
+            }
+            else
+            {
+
+                _cursorIndicator.transform.position = newPos;
+
+                //issue order
+                 order = new ARPG_PlayerMoveOrder(newPos);
+
+               
+            }
 
             _player.ReceiveOrder(order);
 
