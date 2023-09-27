@@ -179,12 +179,7 @@ public class ARPG_Player : ARPG_Creature
 
     }
 
-    public void GetCamera(ARPG_MainCamera mainCamera)
-    {
-        this._camera = mainCamera;
-
-
-    }
+    public void GetCamera(ARPG_MainCamera mainCamera) => this._camera = mainCamera;
 
 
     public void ReceiveOrder(ARPG_PlayerOrder order) 

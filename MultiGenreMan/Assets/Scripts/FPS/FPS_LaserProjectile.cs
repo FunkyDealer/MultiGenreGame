@@ -15,6 +15,10 @@ public class FPS_LaserProjectile : MonoBehaviour
     public Vector3 EyePoint;
     [HideInInspector]
     public Vector3 ShootingDirection;
+    [HideInInspector]
+    public float Recoil;
+    [HideInInspector]
+    public float Spread;
 
     private Vector3 _ContactPoint;
 
@@ -34,6 +38,15 @@ public class FPS_LaserProjectile : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        
+        //spread
+        Vector3 SpreadVector = new Vector3(Random.value, Random.value, Random.value);
+        SpreadVector.Normalize();
+
+        //apply recoil
+        ShootingDirection += SpreadVector * Spread * 0.05f + Vector3.up * Recoil * 0.1f;
+
+
         Vector3 start = Vector3.zero;
         Vector3 end = EyePoint + ShootingDirection * 100;
 
@@ -42,7 +55,7 @@ public class FPS_LaserProjectile : MonoBehaviour
         if (Physics.Raycast(EyePoint, ShootingDirection, out hit, 100))
         {
 
-            Debug.Log("Something was hit");
+            //Debug.Log("Something was hit");
 
             _myLineRenderer.startColor = _hitEnvironmentColor;
             _myLineRenderer.endColor = _hitEnvironmentColor;

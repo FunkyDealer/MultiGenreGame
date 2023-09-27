@@ -31,14 +31,22 @@ public class FPSPlayer : FPS_Creature
     private Quaternion _cameraOriginalRotation;
     private Quaternion _bodyOriginalRotation;
 
+    
+    //Shooting
     [SerializeField]
     private Transform _cameraTransform;
-
     [SerializeField]
     Transform _shootingPoint;
-
     [SerializeField]
     GameObject _laserProjectilePrefab;
+    private bool _canShoot = true;
+
+    private float _currentRecoil = 0; //recoil starts at 0
+    private float _maxRecoil = 0.5f; //Max recoil the gun can have
+    private float _recoilIncreasePerShot = 0.1f; //recoil increases per 0.1 per shot
+    private float _timeToStartStabilizing = 0.1f; //Time it takes after a shot is fired before the player starts stabilizing their weapon
+    private bool _stabilize = true; //can the player start stabilizing their weapon after firing?
+    private float _recoilStabilizationPerSecond = 0.5f; //Player stabelizer their weapon x value per second
 
     private void Awake()
     {
@@ -93,6 +101,13 @@ public class FPSPlayer : FPS_Creature
 
 
         ResetInputs();
+
+        if (_currentRecoil > 0 && _stabilize)
+        {
+            _currentRecoil -= 0.5f * Time.deltaTime;
+            if (_currentRecoil < 0) _currentRecoil = 0;
+        }
+
     }
 
     private void LateUpdate()
@@ -125,9 +140,13 @@ public class FPSPlayer : FPS_Creature
             _jump = true;
         }
 
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButton("Fire1"))
         {
             _firePrimary = true;
+        }
+        else
+        {
+            _firePrimary = false;            
         }
 
         if (Input.GetButtonDown("Fire2"))
@@ -142,7 +161,7 @@ public class FPSPlayer : FPS_Creature
     //shooting Function
     private void Shoot()
     {
-        if (_firePrimary)
+        if (_canShoot && _firePrimary)
         {
 
             GameObject projectile = Instantiate(_laserProjectilePrefab, _shootingPoint.position, Quaternion.identity);
@@ -150,9 +169,18 @@ public class FPSPlayer : FPS_Creature
             laser.Shooter = this;
             laser.EyePoint = _cameraTransform.position;
             laser.ShootingDirection = _cameraTransform.forward;
+            laser.Recoil = _currentRecoil;
+            laser.Spread = _myRigidBody.velocity.magnitude;
 
+            _currentRecoil += _recoilIncreasePerShot;
+            if (_currentRecoil > _maxRecoil) _currentRecoil = _maxRecoil;
 
-            _firePrimary = false;
+            StartCoroutine(WeaponFireDelay(0.2f));
+
+            StopCoroutine(WeaponStabilizingDelay(0));
+            StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
+
+            //_firePrimary = false;
         }
 
         if (_fireSecondary)
@@ -161,6 +189,24 @@ public class FPSPlayer : FPS_Creature
         }
 
 
+    }
+    private IEnumerator WeaponFireDelay(float time)
+    {
+        _canShoot = false;
+
+        yield return new WaitForSeconds(time);
+
+
+        _canShoot = true;
+    }
+    private IEnumerator WeaponStabilizingDelay(float time)
+    {
+        
+        _stabilize = false;
+
+        yield return new WaitForSeconds(time);
+
+        _stabilize = true;
     }
 
     //Player's Movement Input
@@ -249,5 +295,7 @@ public class FPSPlayer : FPS_Creature
             }
 
     }
+
+
 
 }

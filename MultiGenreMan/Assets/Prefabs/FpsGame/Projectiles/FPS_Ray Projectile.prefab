@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2463d5ad5ad4b5e4584a35ff8554ef76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _lifeTime: 0.1
   Shooter: {fileID: 0}
-  ShootingPoint: {x: 0, y: 0, z: 0}
   EyePoint: {x: 0, y: 0, z: 0}
   ShootingDirection: {x: 0, y: 0, z: 0}
 --- !u!1 &8183474112421831431
