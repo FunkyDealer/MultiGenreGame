@@ -205,7 +205,7 @@ public class ARPG_Player : ARPG_Creature
         EndAllOrders();
 
         _moveOrder = true;
-        _newTargetPosition = order._position;
+        _newTargetPosition = order.Position;
 
         _myNavMeshAgent.stoppingDistance = 0;
 

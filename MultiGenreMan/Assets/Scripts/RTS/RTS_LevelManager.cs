@@ -11,6 +11,7 @@ public class RTS_LevelManager : MonoBehaviour
     private List<GameObject> _spawnPoints = new List<GameObject>();
     [SerializeField]
     private static List<GameObject> _spawnP = new List<GameObject>();
+    
 
 
     private void Awake()
@@ -52,6 +53,13 @@ public class RTS_LevelManager : MonoBehaviour
         {
             player.transform.position = Vector3.zero;
         }
+
+    }
+
+    public static Vector3 GetSpawnPoint(int team)
+    {
+        return _spawnP[team-1].transform.position;
+
 
     }
 }

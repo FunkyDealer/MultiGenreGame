@@ -48,6 +48,12 @@ public class FPSPlayer : FPS_Creature
     private bool _stabilize = true; //can the player start stabilizing their weapon after firing?
     private float _recoilStabilizationPerSecond = 0.5f; //Player stabelizer their weapon x value per second
 
+    private bool _jump = false;
+    private bool _firePrimary = false;
+    private bool _fireSecondary = false;
+    private Vector2 _movementInput = Vector2.zero;
+    private Vector2 _mouseInput = Vector2.zero;
+
     private void Awake()
     {
         _myRigidBody = GetComponent<Rigidbody>();
@@ -69,11 +75,7 @@ public class FPSPlayer : FPS_Creature
 
     }
 
-    private bool _jump = false;
-    private bool _firePrimary = false;
-    private bool _fireSecondary = false;
-    private Vector2 _movementInput = Vector2.zero;
-    private Vector2 _mouseInput = Vector2.zero;
+
 
 
 
@@ -95,7 +97,6 @@ public class FPSPlayer : FPS_Creature
     private void FixedUpdate()
     {
         CheckForJumpClear();
-
 
         BodyMovement();
 
@@ -224,9 +225,7 @@ public class FPSPlayer : FPS_Creature
 
             jumpForce = Vector3.up * _jumpPower;
             _myRigidBody.AddForce(jumpForce, ForceMode.VelocityChange);
-
         }
-
 
         //turn the camera's forward into a flat vector
         Vector3 cameraForward = _cameraTransform.forward; 
@@ -242,7 +241,6 @@ public class FPSPlayer : FPS_Creature
         _direction.y = dirY;
 
         _myRigidBody.velocity = _direction;
-
 
     }
 
