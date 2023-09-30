@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class RTS_Player : MonoBehaviour
@@ -18,7 +19,8 @@ public class RTS_Player : MonoBehaviour
 
     private Vector2 _movementInput = Vector2.zero;
 
-    private RTS_ClickableEntity _currentlySelectedEntity = null;
+    private Dictionary<int,RTS_ClickableEntity> _currentlySelectedEntities; //item.GetInstanceID() , item
+    private int _SelectedEntitiesAmmount = 0;
 
     [SerializeField]
     GameObject _cursorIndicator;
@@ -29,6 +31,8 @@ public class RTS_Player : MonoBehaviour
         RTS_LevelManager.ChooseSpawnPoints(this);
 
         Team = _team;
+
+        _currentlySelectedEntities = new Dictionary<int, RTS_ClickableEntity>();
 
         StartGameBySpawningBuilder();
     }
@@ -55,7 +59,7 @@ public class RTS_Player : MonoBehaviour
 
         if (IsSomethingSelected())
         {
-            _cursorIndicator.transform.position = _currentlySelectedEntity.transform.position + Vector3.up * 3;
+            _cursorIndicator.transform.position = _currentlySelectedEntities.First().Value.transform.position + Vector3.up * 3;
         }
 
 
@@ -67,15 +71,79 @@ public class RTS_Player : MonoBehaviour
 
     public void MoveCameraVertically(float input) => transform.position += Vector3.forward * input * _cameraPanSpeed * Time.deltaTime;
 
-    public void SelectEntity(RTS_ClickableEntity entity)
+    //return true if sucessful in selecting something, false if otherwise
+    public bool TryToSelectEntities(List<GameObject> objects, bool adding)
     {
-        _currentlySelectedEntity = null;
-        _currentlySelectedEntity = entity;
+        if (objects.Count == 0)
+        {
+            //Debug.Log("List was Empty, couldn't select anything");
+            DeselectAllEntities();
+            return false;
+        }
+
+        List<RTS_ClickableEntity> entities = new List<RTS_ClickableEntity>();
+
+        foreach (var o in objects)
+        {
+            RTS_ClickableEntity entity = o.GetComponent<RTS_ClickableEntity>();
+           if (entity != null)
+            {
+                entities.Add(entity);
+            }
+        }
+
+        int entitesSize = entities.Count;
+        
+        if (entitesSize == 0)
+        {
+            //deselect all units
+            DeselectAllEntities();
+            return false;
+        }
+        else if (entitesSize == 1)
+        {
+            if (!adding) SelectSingleEntity(entities[0]);
+
+            return true;
+        }
+        else if (entitesSize > 1)
+        {
+            if (!adding) SelectMultipleEntities(entities);
+
+            return true;
+        }
+
+
+        return false;
     }
 
-    public void DeselectEntity()
+
+    public void SelectSingleEntity(RTS_ClickableEntity entity)
     {
-        _currentlySelectedEntity = null;
+        DeselectAllEntities();
+        _currentlySelectedEntities.Add(entity.GetInstanceID() ,entity);
+        _SelectedEntitiesAmmount++;
+    }
+
+    public void SelectMultipleEntities(List<RTS_ClickableEntity> entities)
+    {
+        DeselectAllEntities();
+
+        foreach (var e in entities)
+        {
+            _currentlySelectedEntities.Add(e.GetInstanceID(), e);
+
+        }
+
+        _SelectedEntitiesAmmount = _currentlySelectedEntities.Count;
+    }
+
+    public void DeselectAllEntities()
+    {
+        _currentlySelectedEntities.Clear();
+        _SelectedEntitiesAmmount = 0;
+
+        _cursorIndicator.transform.position = new Vector3(0, -5, 0);
     }
 
     public void IssueOrder(RTS_PlayerOrder order)
@@ -96,7 +164,12 @@ public class RTS_Player : MonoBehaviour
 
     private void IssueMoveOrder(RTS_PlayerMoveOrder order)
     {
-        _currentlySelectedEntity.ReceiveMoveOrder(order);
+        foreach (var unit in _currentlySelectedEntities)
+        {
+            unit.Value.ReceiveMoveOrder(order);
+        }
+
+        
 
 
     }
@@ -110,5 +183,5 @@ public class RTS_Player : MonoBehaviour
 
     }
 
-    public bool IsSomethingSelected() => _currentlySelectedEntity != null;
+    public bool IsSomethingSelected() => _SelectedEntitiesAmmount > 0;
 }
