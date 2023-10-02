@@ -49,6 +49,8 @@ MonoBehaviour:
   Shooter: {fileID: 0}
   EyePoint: {x: 0, y: 0, z: 0}
   ShootingDirection: {x: 0, y: 0, z: 0}
+  Recoil: 0
+  Spread: 0
 --- !u!1 &8183474112421831431
 GameObject:
   m_ObjectHideFlags: 0

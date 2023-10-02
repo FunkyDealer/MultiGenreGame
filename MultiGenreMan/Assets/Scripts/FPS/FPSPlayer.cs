@@ -12,13 +12,13 @@ public class FPSPlayer : FPS_Creature
 
     [SerializeField]
     Transform _feet;
-    private bool _canJump;
-    private bool _inAir = true;
+    private bool _isGrounded;
     [SerializeField]
     int _jumpPower = 7;
 
     private Rigidbody _myRigidBody;
 
+    
     //camera stuff
     [SerializeField, Min(0.1f)]
     private float _sensitivity = 10F; //Mouse Sensitivity
@@ -35,18 +35,18 @@ public class FPSPlayer : FPS_Creature
     //Shooting
     [SerializeField]
     private Transform _cameraTransform;
+
     [SerializeField]
-    Transform _shootingPoint;
+    private Transform _weaponPos;
+    private List<FPS_Weapon> _heldWeapons;
+    
+
+    private FPS_Weapon _currentlySelectedWeapon;
     [SerializeField]
     GameObject _laserProjectilePrefab;
     private bool _canShoot = true;
 
-    private float _currentRecoil = 0; //recoil starts at 0
-    private float _maxRecoil = 0.5f; //Max recoil the gun can have
-    private float _recoilIncreasePerShot = 0.1f; //recoil increases per 0.1 per shot
-    private float _timeToStartStabilizing = 0.1f; //Time it takes after a shot is fired before the player starts stabilizing their weapon
-    private bool _stabilize = true; //can the player start stabilizing their weapon after firing?
-    private float _recoilStabilizationPerSecond = 0.5f; //Player stabelizer their weapon x value per second
+    
 
     private bool _jump = false;
     private bool _firePrimary = false;
@@ -57,7 +57,7 @@ public class FPSPlayer : FPS_Creature
     private void Awake()
     {
         _myRigidBody = GetComponent<Rigidbody>();
-
+        _heldWeapons = new List<FPS_Weapon>();
 
     }
 
@@ -96,18 +96,14 @@ public class FPSPlayer : FPS_Creature
 
     private void FixedUpdate()
     {
-        CheckForJumpClear();
+        CheckForIsGrounded();
 
         BodyMovement();
 
 
         ResetInputs();
 
-        if (_currentRecoil > 0 && _stabilize)
-        {
-            _currentRecoil -= 0.5f * Time.deltaTime;
-            if (_currentRecoil < 0) _currentRecoil = 0;
-        }
+       
 
     }
 
@@ -132,11 +128,12 @@ public class FPSPlayer : FPS_Creature
     //handles all inputs
     private void PlayerInput()
     {
-        _mouseInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+        //Use GetAxisRaw to get a more responsive input
+        _mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
 
-        _movementInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
 
-        if (_canJump && Input.GetButton("Jump"))
+        if (_isGrounded && Input.GetButton("Jump"))
         {
             _jump = true;
         }
@@ -162,53 +159,27 @@ public class FPSPlayer : FPS_Creature
     //shooting Function
     private void Shoot()
     {
-        if (_canShoot && _firePrimary)
+        if (_currentlySelectedWeapon != null)
         {
 
-            GameObject projectile = Instantiate(_laserProjectilePrefab, _shootingPoint.position, Quaternion.identity);
-            FPS_LaserProjectile laser = projectile.GetComponent<FPS_LaserProjectile>();
-            laser.Shooter = this;
-            laser.EyePoint = _cameraTransform.position;
-            laser.ShootingDirection = _cameraTransform.forward;
-            laser.Recoil = _currentRecoil;
-            laser.Spread = _myRigidBody.velocity.magnitude;
+            if (_currentlySelectedWeapon.CanShoot && _firePrimary)
+            {
+                _currentlySelectedWeapon.ShootPrimary(_cameraTransform.position, _cameraTransform.forward);
 
-            _currentRecoil += _recoilIncreasePerShot;
-            if (_currentRecoil > _maxRecoil) _currentRecoil = _maxRecoil;
 
-            StartCoroutine(WeaponFireDelay(0.2f));
+                //_firePrimary = false;
+            }
 
-            StopCoroutine(WeaponStabilizingDelay(0));
-            StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
+            if (_fireSecondary)
+            {
+                //Nothing yet
+            }
 
-            //_firePrimary = false;
         }
 
-        if (_fireSecondary)
-        {
-            //Nothing yet
-        }
-
-
     }
-    private IEnumerator WeaponFireDelay(float time)
-    {
-        _canShoot = false;
 
-        yield return new WaitForSeconds(time);
-
-
-        _canShoot = true;
-    }
-    private IEnumerator WeaponStabilizingDelay(float time)
-    {
-        
-        _stabilize = false;
-
-        yield return new WaitForSeconds(time);
-
-        _stabilize = true;
-    }
+  
 
     //Player's Movement Input
     private void BodyMovement()
@@ -218,13 +189,17 @@ public class FPSPlayer : FPS_Creature
         //Jumping
         Vector3 jumpForce = Vector3.zero;
 
-        if (_canJump && _jump)
+        if (_isGrounded && _jump)
         {
-            _canJump = false;
+            _isGrounded = false;
             _jump = false;
 
-            jumpForce = Vector3.up * _jumpPower;
-            _myRigidBody.AddForce(jumpForce, ForceMode.VelocityChange);
+            // jumpForce = Vector3.up * _jumpPower;
+            // jumpForce = sqrt(height * gravity * 2)
+            float height = 3;
+            jumpForce = Vector3.up * (float)Math.Sqrt(2 * Math.Abs(Physics.gravity.y) * height);
+            //_myRigidBody.AddForce(jumpForce, ForceMode.Impulse);
+            _myRigidBody.velocity += jumpForce;
         }
 
         //turn the camera's forward into a flat vector
@@ -274,23 +249,32 @@ public class FPSPlayer : FPS_Creature
         transform.localRotation = _bodyOriginalRotation * xQuaternion;
     }
 
-    private void CheckForJumpClear()
+    private void CheckForIsGrounded()
     {
-
             RaycastHit hit;
             if (Physics.Raycast(_feet.position, -_feet.up, out hit, 0.3f)) //Landing
             {
-                _inAir = false;
-                _canJump = true;
+                _isGrounded = true;
              Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.green);
              }
             else 
             {
-                _inAir = true;
-                _canJump = false;
+                _isGrounded = false;
 
                 Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.red);
             }
+
+    }
+
+    public void PickUpWeapon(GameObject weaponPrefab)
+    {
+        FPS_Weapon weapon = Instantiate(weaponPrefab, Vector3.zero, Quaternion.identity).GetComponent<FPS_Weapon>();
+        weapon.gameObject.transform.SetParent(_weaponPos, true);
+        weapon.transform.localPosition = Vector3.zero;
+        weapon.transform.localRotation = Quaternion.identity;
+        _heldWeapons.Add(weapon);
+        _currentlySelectedWeapon = weapon;
+        weapon.PickUpWeapon(this);
 
     }
 

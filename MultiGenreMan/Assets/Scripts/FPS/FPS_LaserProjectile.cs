@@ -12,15 +12,9 @@ public class FPS_LaserProjectile : MonoBehaviour
     [HideInInspector]
     public FPS_Creature Shooter;
     [HideInInspector]
-    public Vector3 EyePoint;
+    public FPS_Creature HitEntity;
     [HideInInspector]
-    public Vector3 ShootingDirection;
-    [HideInInspector]
-    public float Recoil;
-    [HideInInspector]
-    public float Spread;
-
-    private Vector3 _ContactPoint;
+    public Vector3 HitPoint;
 
     private Color _hitEnemyColor = Color.red;
     private Color _hitEnvironmentColor = Color.yellow;
@@ -30,58 +24,20 @@ public class FPS_LaserProjectile : MonoBehaviour
     {
         _myLineRenderer = GetComponentInChildren<LineRenderer>();
 
-
-
     }
 
 
     // Start is called before the first frame update
     void Start()
-    {
-        
-        //spread
-        Vector3 SpreadVector = new Vector3(Random.value, Random.value, Random.value);
-        SpreadVector.Normalize();
-
-        //apply recoil
-        ShootingDirection += SpreadVector * Spread * 0.05f + Vector3.up * Recoil * 0.1f;
-
-
+    {       
         Vector3 start = Vector3.zero;
-        Vector3 end = EyePoint + ShootingDirection * 100;
-
-        RaycastHit hit;
-
-        if (Physics.Raycast(EyePoint, ShootingDirection, out hit, 100))
-        {
-
-            //Debug.Log("Something was hit");
-
-            _myLineRenderer.startColor = _hitEnvironmentColor;
-            _myLineRenderer.endColor = _hitEnvironmentColor;
-
-            end = transform.InverseTransformPoint(hit.point); //transform the hit point from world space to local space
-
-            FPS_Creature target = hit.collider.gameObject.GetComponent<FPS_Creature>();
-            if (target != null)
-            {
-                _myLineRenderer.startColor = _hitEnemyColor;
-                _myLineRenderer.endColor = _hitEnemyColor;
-                target.ReceiveDamage(50);
-            }
-            
-
-        }
-        else
-        {
-            _myLineRenderer.startColor = _hitNothingColor;
-            _myLineRenderer.endColor = _hitNothingColor;
-
-            Debug.Log("Nothing was hit");
-        }
+        Vector3 end = transform.InverseTransformPoint(HitPoint);  //transform the hit point from world space to local space
 
         _myLineRenderer.SetPosition(0, start);
         _myLineRenderer.SetPosition(1, end);
+
+
+         //Debug.Break();
 
         StartCoroutine(CountDownToDeath(_lifeTime));
     }
