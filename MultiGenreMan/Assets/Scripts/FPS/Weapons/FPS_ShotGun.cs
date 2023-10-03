@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FPS_MachineGun : FPS_Weapon
+public class FPS_ShotGun : FPS_Weapon
 {
-
-
+    [SerializeField]
+    private int _pelletAmmout = 5;
 
 
     protected override void Awake()
@@ -37,17 +37,23 @@ public class FPS_MachineGun : FPS_Weapon
         base.FixedUpdate();
 
 
-    } 
+    }
+       
 
     public override void ShootPrimary(Transform eye)
     {
         base.ShootPrimary(eye);
-        Tuple<Vector3, FPS_Creature> tuple = CalculateHitScanTrajectory(eye);
-         GameObject projectile = Instantiate(_projectilePrefab, _shootingPoint.position, Quaternion.identity);
-        FPS_LaserProjectile laser = projectile.GetComponent<FPS_LaserProjectile>();
-        laser.Shooter = _owner;
-        laser.HitPoint = tuple.Item1;
-        laser.HitEntity = tuple.Item2;
+
+
+        for (int i = 0; i < _pelletAmmout; i++)
+        {
+            Tuple<Vector3, FPS_Creature> tuple = CalculateShotgunTrajectory(eye);
+            GameObject projectile = Instantiate(_projectilePrefab, _shootingPoint.position, Quaternion.identity);
+            FPS_LaserProjectile laser = projectile.GetComponent<FPS_LaserProjectile>();
+            laser.Shooter = _owner;
+            laser.HitPoint = tuple.Item1;
+            laser.HitEntity = tuple.Item2;
+        }      
 
         _recoil += _recoilIncreasePerShot;
         if (_recoil > _maxRecoil) _recoil = _maxRecoil;
@@ -58,19 +64,19 @@ public class FPS_MachineGun : FPS_Weapon
         StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
     }
 
-    protected override Tuple<Vector3, FPS_Creature> CalculateHitScanTrajectory(Transform eye)
+    protected Tuple<Vector3, FPS_Creature> CalculateShotgunTrajectory(Transform eye)
     {
+
         Vector3 contactPoint = eye.position + eye.forward.normalized * _maxRange;
 
-        //this logic comes straight from quake3's machine gun source code
+        //this logic comes straight from quake3's shotgun source code
         float up;
-        float right;
+        float right;        
 
-        contactPoint = Utils.Vector3MA(eye.position, _maxRange, eye.forward); //calculate contact point (where the shot lands)
+        contactPoint = Utils.Vector3MA(eye.position, _maxRange, eye.forward); //calculate contact point (where the shot lands
 
-        right = UnityEngine.Random.value * (float)Math.PI * 2.0f;
-        up = (float)Math.Sin(right) * UnityEngine.Random.Range(-1, 1) * _spread; //calculate vertical spread
-        right = (float)Math.Cos(right) * UnityEngine.Random.Range(-1, 1) * _spread; //calculate horizontal spread      
+        right = Utils.QcRandom(UnityEngine.Random.Range(0, 256)) * _spread; //calculate vertical spread
+        up = Utils.QcRandom(UnityEngine.Random.Range(0, 256)) * _spread; //calculate horizontal spread    
 
         contactPoint = Utils.Vector3MA(contactPoint, right, eye.right); //shift contact point horizontally
         contactPoint = Utils.Vector3MA(contactPoint, up, eye.up); //shift contact point vertically
@@ -110,5 +116,4 @@ public class FPS_MachineGun : FPS_Weapon
 
 
     }
-
 }

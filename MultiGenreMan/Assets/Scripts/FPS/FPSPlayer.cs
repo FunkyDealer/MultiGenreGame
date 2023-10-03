@@ -164,7 +164,7 @@ public class FPSPlayer : FPS_Creature
 
             if (_currentlySelectedWeapon.CanShoot && _firePrimary)
             {
-                _currentlySelectedWeapon.ShootPrimary(_cameraTransform.position, _cameraTransform.forward);
+                _currentlySelectedWeapon.ShootPrimary(_cameraTransform);
 
 
                 //_firePrimary = false;

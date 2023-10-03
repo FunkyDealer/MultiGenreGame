@@ -32,7 +32,9 @@ public class FPS_Weapon : MonoBehaviour
     [SerializeField]
     protected float _weaponFireDelay = 0.1f; //how long till you can shoot again after last shot
     [SerializeField]
-    protected float _maxRange = 50; //max range of weapon
+    protected float _maxRange = 100; //max range of weapon
+    [SerializeField]
+    protected float _spread = 5;
 
     protected virtual void Awake()
     {
@@ -67,7 +69,7 @@ public class FPS_Weapon : MonoBehaviour
         this._owner = owner;
     }
 
-    public virtual void ShootPrimary(Vector3 eyePos, Vector3 eyeDirection)
+    public virtual void ShootPrimary(Transform eye)
     {
 
 
@@ -100,16 +102,17 @@ public class FPS_Weapon : MonoBehaviour
         _canShoot = true;
     }
 
-    protected virtual Tuple<Vector3, FPS_Creature> CalculateHitScanTrajectory(Vector3 eyePos, Vector3 eyeDirection)
-    {
-        Vector3 contactPoint = eyePos + eyeDirection.normalized * _maxRange;
+    protected virtual Tuple<Vector3, FPS_Creature> CalculateHitScanTrajectory(Transform eye)
+    {      
+        Vector3 contactPoint = eye.position + eye.forward.normalized * _maxRange;
 
-        Vector3 direction = eyeDirection;
+        Vector3 direction = eye.forward;        
+
         FPS_Creature hitEnemy = null;
 
         RaycastHit hit;
 
-        if (Physics.Raycast(eyePos, direction, out hit, 100))
+        if (Physics.Raycast(eye.position, direction, out hit, 100))
         {
             //Debug.Log("Something was hit");
 
@@ -131,5 +134,7 @@ public class FPS_Weapon : MonoBehaviour
         return new Tuple<Vector3, FPS_Creature>(contactPoint, hitEnemy);
 
     }
+
+  
 
 }

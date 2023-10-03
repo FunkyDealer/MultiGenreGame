@@ -11,9 +11,9 @@ GameObject:
   - component: {fileID: 170901854997930177}
   - component: {fileID: 3110316464966386141}
   - component: {fileID: 8802380204841942212}
-  - component: {fileID: 4349312572877222594}
+  - component: {fileID: 1114057902060132068}
   m_Layer: 0
-  m_Name: MachineGun
+  m_Name: ShotGun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 4287075391841589994}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.2, z: 0.4}
+  m_LocalScale: {x: 0.16, y: 0.1, z: 0.4}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1399858758391764498}
@@ -85,7 +85,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &4349312572877222594
+--- !u!114 &1114057902060132068
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -94,19 +94,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 4287075391841589994}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c33f9fe05b02da40a0a051c0b87ad0f, type: 3}
+  m_Script: {fileID: 11500000, guid: c5d2c72ebb6b2bc4ba3306f1a2ef0cdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _shootingPoint: {fileID: 1399858758391764498}
   _projectilePrefab: {fileID: 8183474111835587106, guid: f888b17463faee143aa08255ac97b4d9, type: 3}
   _damage: 8
-  _maxRecoil: 0
+  _maxRecoil: 0.5
   _recoilIncreasePerShot: 0.1
   _timeToStartStabilizing: 0.1
   _recoilStabilizationPerSecond: 0.5
-  _weaponFireDelay: 0.1
-  _maxRange: 200
+  _weaponFireDelay: 0.6
+  _maxRange: 100
   _spread: 5
+  _pelletAmmout: 5
 --- !u!1 &8312840705029560480
 GameObject:
   m_ObjectHideFlags: 0
