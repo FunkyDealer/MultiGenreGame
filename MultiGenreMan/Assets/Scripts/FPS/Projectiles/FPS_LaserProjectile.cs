@@ -2,15 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FPS_LaserProjectile : MonoBehaviour
+public class FPS_LaserProjectile : FPS_Projectile
 {
-    [SerializeField]
-    private float _lifeTime = 0.3f;
 
     private LineRenderer _myLineRenderer;
 
-    [HideInInspector]
-    public FPS_Creature Shooter;
+
     [HideInInspector]
     public FPS_Creature HitEntity;
     [HideInInspector]
@@ -25,16 +22,18 @@ public class FPS_LaserProjectile : MonoBehaviour
     Vector3 _end;
 
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         _myLineRenderer = GetComponentInChildren<LineRenderer>();
 
     }
 
 
     // Start is called before the first frame update
-    void Start()
-    {       
+    protected override void Start()
+    {
+        base.Start();
         _start = Vector3.zero;
         _end = transform.InverseTransformPoint(HitPoint);  //transform the hit point from world space to local space
 
@@ -50,27 +49,21 @@ public class FPS_LaserProjectile : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
-       
+       base.Update();
         
 
     }
 
-    private void FixedUpdate()
+    protected override void FixedUpdate()
     {
+        base.FixedUpdate();
         _start += _direction * 2.5f * Time.deltaTime;
 
         _myLineRenderer?.SetPosition(0, _start);
     }
 
-    private IEnumerator CountDownToDeath(float time)
-    {
-        yield return new WaitForSeconds(time);
-
-        //this.gameObject.SetActive(false);
-        Destroy(gameObject);
-    }
 
 
 

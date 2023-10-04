@@ -362,6 +362,15 @@ public class FPSPlayer : FPS_Creature
 
     }
 
+    public override void ReceiveDamage(int damage)
+    {
+        base.ReceiveDamage(damage);
+
+        _currentHealth -= damage;
+
+        Debug.Log("received a hit");
+    }
+
 
 
 }
