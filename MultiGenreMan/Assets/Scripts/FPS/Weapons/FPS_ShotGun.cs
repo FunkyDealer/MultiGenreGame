@@ -55,8 +55,8 @@ public class FPS_ShotGun : FPS_Weapon
             laser.HitEntity = tuple.Item2;
         }      
 
-        _recoil += _recoilIncreasePerShot;
-        if (_recoil > _maxRecoil) _recoil = _maxRecoil;
+        _currentRecoil += _recoilIncreasePerShot;
+        if (_currentRecoil > _maxRecoil) _currentRecoil = _maxRecoil;
 
         StartCoroutine(WeaponFireDelay(_weaponFireDelay));
 

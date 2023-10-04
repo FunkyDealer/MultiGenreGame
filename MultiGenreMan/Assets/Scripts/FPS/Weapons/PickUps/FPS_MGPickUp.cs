@@ -24,7 +24,7 @@ public class FPS_MGPickUp : FPS_WeaponPickUp
     {
         base.GetPickUP(player);
 
-        player.PickUpWeapon(_weaponPrefab);
+        player.PickUpWeapon(_weaponPrefab, _slot);
 
         Destroy(gameObject);
     }

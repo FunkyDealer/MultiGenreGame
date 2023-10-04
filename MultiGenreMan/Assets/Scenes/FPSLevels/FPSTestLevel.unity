@@ -966,6 +966,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _weaponPrefab: {fileID: 4287075391841589994, guid: f1430c83d7b5a5343afcbedfdf890b95, type: 3}
+  _slot: 3
 --- !u!65 &608496534
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2615,6 +2616,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _weaponPrefab: {fileID: 4287075391841589994, guid: 1be9834e15fc9054fb94a0c28bf72db6, type: 3}
+  _slot: 2
 --- !u!1001 &4305353256927214765
 PrefabInstance:
   m_ObjectHideFlags: 0

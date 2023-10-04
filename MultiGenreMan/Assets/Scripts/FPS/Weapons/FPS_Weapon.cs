@@ -19,7 +19,7 @@ public class FPS_Weapon : MonoBehaviour
 
     [SerializeField]
     protected int _damage;
-    protected float _recoil = 0; //recoil starts at 0
+    protected float _currentRecoil = 0; //recoil starts at 0
     [SerializeField]
     protected float _maxRecoil = 0.5f; //Max recoil the gun can have
     [SerializeField]
@@ -50,10 +50,10 @@ public class FPS_Weapon : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
-        if (_recoil > 0 && _stabilize)
+        if (_currentRecoil > 0 && _stabilize)
         {
-            _recoil -= _recoilStabilizationPerSecond * Time.deltaTime;
-            if (_recoil < 0) _recoil = 0;
+            _currentRecoil -= _recoilStabilizationPerSecond * Time.deltaTime;
+            if (_currentRecoil < 0) _currentRecoil = 0;
         }
 
 
@@ -80,6 +80,24 @@ public class FPS_Weapon : MonoBehaviour
     {
 
 
+
+    }
+
+    public virtual void SwitchOut()
+    {
+        StopAllCoroutines();
+        this.gameObject.SetActive(false);
+
+    }
+
+    public virtual void SwitchIn()
+    {
+        this.gameObject.SetActive(true);
+
+        
+        _canShoot = true;
+        _stabilize = true;
+        _currentRecoil = 0;
 
     }
 

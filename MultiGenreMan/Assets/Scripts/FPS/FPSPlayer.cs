@@ -54,10 +54,22 @@ public class FPSPlayer : FPS_Creature
     private Vector2 _movementInput = Vector2.zero;
     private Vector2 _mouseInput = Vector2.zero;
 
+    private List<FPS_Weapon>[] _slots;
+    private int _currentlySelectedSlot = 0;
+    private int _currentlySelectedLocalSlot = 1;
+
     private void Awake()
     {
         _myRigidBody = GetComponent<Rigidbody>();
         _heldWeapons = new List<FPS_Weapon>();
+
+        _slots = new List<FPS_Weapon>[9];
+
+        for (int i = 0; i < 9; i++)
+        {
+            _slots[i] = new List<FPS_Weapon>();
+        }
+
 
     }
 
@@ -152,9 +164,75 @@ public class FPSPlayer : FPS_Creature
             _fireSecondary = true;
         }
 
-        
+        if (!_firePrimary && !_fireSecondary && Input.inputString != "")
+        {
+            int number;
+            bool isNumber = Int32.TryParse(Input.inputString, out number);
+            if (isNumber && number > 0 && number < 10)
+            {
+                SelectSlot(number);
+            }
+        }
+
     }
 
+    private void SelectSlot(int slot)
+    {
+        int slotCount = _slots[slot - 1].Count;
+
+        if (_currentlySelectedSlot != slot)
+        {         
+            if (slotCount > 0) //get weapon in the first local slot
+            {
+                _currentlySelectedSlot = slot;
+                _currentlySelectedLocalSlot = 0;
+                SelectWeaponFromSlot(slot, _currentlySelectedLocalSlot);
+            }
+            else
+            {
+                Debug.Log($"there are no weapons in slot {slot}");
+            }
+        }
+        else
+        {
+            if (slotCount > _currentlySelectedLocalSlot + 2) //get the weapon in the next local slot
+            {
+                _currentlySelectedLocalSlot++;
+                SelectWeaponFromSlot(slot, _currentlySelectedLocalSlot);
+            }
+             else if (slotCount == _currentlySelectedLocalSlot + 1) //get the first local slot again
+            {
+                if (_currentlySelectedLocalSlot == 0)
+                {
+                    Debug.Log("tried to selected the weapon that you are already holding");
+                }
+                else
+                {
+                    _currentlySelectedLocalSlot = 0;
+                    SelectWeaponFromSlot(slot, _currentlySelectedLocalSlot);
+                }
+            }
+            
+        }
+    }
+
+    private void SelectWeaponFromSlot(int weaponSlot, int currentlySelectedLocalSlot)
+    {
+        _currentlySelectedSlot = weaponSlot;
+        _currentlySelectedLocalSlot = currentlySelectedLocalSlot;
+
+        if (_currentlySelectedWeapon != null)
+        {
+            _currentlySelectedWeapon.SwitchOut();
+            _currentlySelectedWeapon = null;            
+        }
+        //the local slot is already in array format (starts at 0)
+        //the weapon slot is in normal format (starts at 1)
+        _currentlySelectedWeapon = _slots[weaponSlot - 1][currentlySelectedLocalSlot];
+        _currentlySelectedWeapon?.SwitchIn();
+
+        //Debug.Log($"selecting weapon {currentlySelectedLocalSlot+1} from slot {weaponSlot}");
+    }
 
     //shooting Function
     private void Shoot()
@@ -166,8 +244,6 @@ public class FPSPlayer : FPS_Creature
             {
                 _currentlySelectedWeapon.ShootPrimary(_cameraTransform);
 
-
-                //_firePrimary = false;
             }
 
             if (_fireSecondary)
@@ -263,18 +339,26 @@ public class FPSPlayer : FPS_Creature
 
                 Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.red);
             }
-
     }
 
-    public void PickUpWeapon(GameObject weaponPrefab)
+    public void PickUpWeapon(GameObject weaponPrefab, int slot)
     {
         FPS_Weapon weapon = Instantiate(weaponPrefab, Vector3.zero, Quaternion.identity).GetComponent<FPS_Weapon>();
         weapon.gameObject.transform.SetParent(_weaponPos, true);
         weapon.transform.localPosition = Vector3.zero;
         weapon.transform.localRotation = Quaternion.identity;
         _heldWeapons.Add(weapon);
-        _currentlySelectedWeapon = weapon;
         weapon.PickUpWeapon(this);
+        _slots[slot - 1].Add(weapon);
+
+        weapon.gameObject.SetActive(false);
+
+        if (_currentlySelectedWeapon == null)
+        {
+            SelectWeaponFromSlot(slot, 0);
+        }
+        //_currentlySelectedWeapon = weapon;       
+        
 
     }
 

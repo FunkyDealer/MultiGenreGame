@@ -7,6 +7,9 @@ public class FPS_WeaponPickUp : MonoBehaviour
     [SerializeField]
     protected GameObject _weaponPrefab;
 
+    [SerializeField]
+    protected int _slot; //slot where the weapon goes
+
     // Start is called before the first frame update
     void Start()
     {

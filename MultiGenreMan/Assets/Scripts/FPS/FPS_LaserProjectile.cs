@@ -20,6 +20,11 @@ public class FPS_LaserProjectile : MonoBehaviour
     private Color _hitEnvironmentColor = Color.yellow;
     private Color _hitNothingColor = Color.blue;
 
+    Vector3 _direction;
+    Vector3 _start;
+    Vector3 _end;
+
+
     private void Awake()
     {
         _myLineRenderer = GetComponentInChildren<LineRenderer>();
@@ -30,11 +35,13 @@ public class FPS_LaserProjectile : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {       
-        Vector3 start = Vector3.zero;
-        Vector3 end = transform.InverseTransformPoint(HitPoint);  //transform the hit point from world space to local space
+        _start = Vector3.zero;
+        _end = transform.InverseTransformPoint(HitPoint);  //transform the hit point from world space to local space
 
-        _myLineRenderer.SetPosition(0, start);
-        _myLineRenderer.SetPosition(1, end);
+        _direction = _end - _start;
+
+        _myLineRenderer.SetPosition(0, _start);
+        _myLineRenderer.SetPosition(1, _end);
 
 
          //Debug.Break();
@@ -52,7 +59,9 @@ public class FPS_LaserProjectile : MonoBehaviour
 
     private void FixedUpdate()
     {
-        
+        _start += _direction * 2.5f * Time.deltaTime;
+
+        _myLineRenderer?.SetPosition(0, _start);
     }
 
     private IEnumerator CountDownToDeath(float time)
