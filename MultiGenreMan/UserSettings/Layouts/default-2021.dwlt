@@ -118,7 +118,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 200}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-  controlID: 21
+  controlID: 70
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -143,7 +143,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 200}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 22
+  controlID: 71
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -168,7 +168,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 29
+  controlID: 78
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -193,7 +193,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 30
+  controlID: 79
 --- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -293,8 +293,8 @@ MonoBehaviour:
     y: 0
     width: 389
     height: 947
-  m_MinSize: {x: 276, y: 71}
-  m_MaxSize: {x: 4001, y: 4021}
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 18}
   m_Panes:
   - {fileID: 18}
@@ -426,7 +426,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 263affff644fffff7c4fffff9853ffffca75ffff5085ffff38fbffff
+      m_ExpandedIDs: d0f9ffff30faffff38fbffff265b0000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -675,9 +675,9 @@ MonoBehaviour:
   m_PlayAudio: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 11.995872, y: -37.427208, z: 13.597195}
+    m_Target: {x: 12.109524, y: -5.3768935, z: -3.1293478}
     speed: 2
-    m_Value: {x: 11.995872, y: -37.427208, z: 13.597195}
+    m_Value: {x: 12.109524, y: -5.3768935, z: -3.1293478}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -724,13 +724,13 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: 0.19122417, y: 0.64520794, z: -0.16950502, w: 0.7204937}
+    m_Target: {x: -0.33424062, y: -0.198518, z: 0.06971872, w: -0.91909385}
     speed: 2
-    m_Value: {x: 0.191157, y: 0.64498127, z: -0.16944547, w: 0.72024053}
+    m_Value: {x: -0.33412027, y: -0.19844653, z: 0.06969362, w: -0.918763}
   m_Size:
-    m_Target: 102.435684
+    m_Target: 114.29593
     speed: 2
-    m_Value: 102.435684
+    m_Value: 114.29593
   m_Ortho:
     m_Target: 0
     speed: 2
@@ -796,22 +796,22 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Prefabs/FpsGame/Weapons
+    - Assets/Prefabs/FpsGame
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/Prefabs/FpsGame/Weapons
+  - Assets/Prefabs/FpsGame
   m_LastFoldersGridSize: -1
   m_LastProjectPath: B:\Unity projects\MultiGenreMan
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 79}
-    m_SelectedIDs: ce5b0000
-    m_LastClickedID: 23502
-    m_ExpandedIDs: 00000000825b00009a5b00009e5b0000a05b0000ca5b000000ca9a3b
+    m_SelectedIDs: 4e9d0000
+    m_LastClickedID: 40270
+    m_ExpandedIDs: 00000000345c0000485c00004c5c000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -839,7 +839,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000825b0000
+    m_ExpandedIDs: 00000000345c0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 

@@ -17,6 +17,7 @@ public class FPSPlayer : FPS_Creature
     int _jumpPower = 7;
 
     private Rigidbody _myRigidBody;
+    private CapsuleCollider _myCollider;
 
     
     //camera stuff
@@ -35,6 +36,14 @@ public class FPSPlayer : FPS_Creature
     //Shooting
     [SerializeField]
     private Transform _cameraTransform;
+    [SerializeField]
+    private Transform _crouchPos;
+    [SerializeField]
+    private Transform _standUpPos;
+    [SerializeField]
+    private Transform _eyesTransform;
+
+
 
     [SerializeField]
     private Transform _weaponPos;
@@ -46,8 +55,13 @@ public class FPSPlayer : FPS_Creature
     GameObject _laserProjectilePrefab;
     private bool _canShoot = true;
 
-    
+    [SerializeField]
+    private float _crouchSpeed = 10;
 
+    private bool _tryingToGrabWall = false;
+    private bool _grabingWall = false;
+
+    private bool _crouch = false;
     private bool _jump = false;
     private bool _firePrimary = false;
     private bool _fireSecondary = false;
@@ -58,9 +72,11 @@ public class FPSPlayer : FPS_Creature
     private int _currentlySelectedSlot = 0;
     private int _currentlySelectedLocalSlot = 1;
 
+
     private void Awake()
     {
         _myRigidBody = GetComponent<Rigidbody>();
+        _myCollider = GetComponent<CapsuleCollider>();
         _heldWeapons = new List<FPS_Weapon>();
 
         _slots = new List<FPS_Weapon>[9];
@@ -96,9 +112,10 @@ public class FPSPlayer : FPS_Creature
     {
 
         PlayerInput();
-       
 
-        CameraAndBodyRotation();
+
+        //CameraAndBodyRotation();
+        MouseLook();
 
 
         Shoot();
@@ -110,14 +127,19 @@ public class FPSPlayer : FPS_Creature
     {
         CheckForIsGrounded();
 
+        JumpFromWall();
+
         BodyMovement();
 
+        GrabOnToWall();
+
+        Crouch();        
 
         ResetInputs();
 
-       
 
     }
+
 
     private void LateUpdate()
     {
@@ -145,7 +167,7 @@ public class FPSPlayer : FPS_Creature
 
         _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
 
-        if (_isGrounded && Input.GetButton("Jump"))
+        if (Input.GetButtonDown("Jump"))
         {
             _jump = true;
         }
@@ -174,6 +196,12 @@ public class FPSPlayer : FPS_Creature
             }
         }
 
+        if (!_isGrounded && Input.GetButtonDown("Crouch")) TryToGrabWall();
+
+        if (Input.GetButton("Crouch")) _crouch = true;
+        else _crouch = false;
+
+        if (_grabingWall && Input.GetButtonUp("Crouch")) ReleaseWall();
     }
 
     private void SelectSlot(int slot)
@@ -211,8 +239,7 @@ public class FPSPlayer : FPS_Creature
                     _currentlySelectedLocalSlot = 0;
                     SelectWeaponFromSlot(slot, _currentlySelectedLocalSlot);
                 }
-            }
-            
+            }            
         }
     }
 
@@ -255,12 +282,14 @@ public class FPSPlayer : FPS_Creature
 
     }
 
-  
+   
 
     //Player's Movement Input
     private void BodyMovement()
     {
         _movementInput = Vector2.ClampMagnitude(_movementInput, 1);
+
+        //if (!_isGrounded) _movementInput = Vector2.zero;
 
         //Jumping
         Vector3 jumpForce = Vector3.zero;
@@ -275,23 +304,52 @@ public class FPSPlayer : FPS_Creature
             float height = 3;
             jumpForce = Vector3.up * (float)Math.Sqrt(2 * Math.Abs(Physics.gravity.y) * height);
             //_myRigidBody.AddForce(jumpForce, ForceMode.Impulse);
-            _myRigidBody.velocity += jumpForce;
+            _myRigidBody.velocity += new Vector3(0, jumpForce.y, 0);
         }
 
         //turn the camera's forward into a flat vector
         Vector3 cameraForward = _cameraTransform.forward; 
         cameraForward.y = 0;
 
-        float dirY = _myRigidBody.velocity.y; //conserve y speed so that fall speed is always the same
+        //conserve y speed so that fall speed is always the same
+        Vector3 previousVelocity = _myRigidBody.velocity; 
+
         //create movement vectors
         Vector3 horizontalDir = _cameraTransform.right * _movementInput.x;
         Vector3 verticalDir =  cameraForward * _movementInput.y;
 
-        _direction = (horizontalDir + verticalDir) * _movSpeed;
+        _direction = (horizontalDir + verticalDir) * _movSpeed;    
+       
 
-        _direction.y = dirY;
+
+        _direction = new Vector3(_direction.x, previousVelocity.y, _direction.z);
 
         _myRigidBody.velocity = _direction;
+
+    }
+
+    private void Crouch()
+    {
+        if (_crouch)
+        {
+            _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, _crouchPos.position, _crouchSpeed * Time.deltaTime);
+
+            _eyesTransform.position = Vector3.Lerp(_eyesTransform.position,new Vector3(_eyesTransform.position.x, _crouchPos.position.y, _eyesTransform.position.z), _crouchSpeed * Time.deltaTime);
+
+            _myCollider.height = 1.2f;
+            _myCollider.center = new Vector3(0, -0.4f, 0);
+        }
+        else
+        {
+            _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, _standUpPos.position, _crouchSpeed * Time.deltaTime);
+
+            _eyesTransform.position = Vector3.Lerp(_eyesTransform.position, new Vector3(_eyesTransform.position.x, _standUpPos.position.y, _eyesTransform.position.z), _crouchSpeed * Time.deltaTime);
+
+            _myCollider.height = 2f;
+            _myCollider.center = Vector3.zero;
+        }
+
+
 
     }
 
@@ -325,6 +383,20 @@ public class FPSPlayer : FPS_Creature
         transform.localRotation = _bodyOriginalRotation * xQuaternion;
     }
 
+    private float _pitch = 0;
+
+    private void MouseLook()
+    {
+        _pitch += _mouseInput.y * -_sensitivity * Time.deltaTime;
+        _pitch = Mathf.Clamp(_pitch, -90, 90);
+
+        _cameraTransform.localRotation = Quaternion.Euler(Vector3.right * _pitch);
+
+        transform.rotation *= Quaternion.Euler(_mouseInput.x * _sensitivity * Time.deltaTime * Vector3.up);
+
+
+    }
+
     private void CheckForIsGrounded()
     {
             RaycastHit hit;
@@ -339,6 +411,78 @@ public class FPSPlayer : FPS_Creature
 
                 Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.red);
             }
+    }
+
+    private void GrabOnToWall()
+    {
+        if (_grabingWall)
+        {
+            _myRigidBody.velocity = Vector3.zero;
+            
+
+
+        }
+    }
+
+    private void ReleaseWall()
+    {
+        _grabingWall = false;
+        Debug.Log("released the wall");
+
+        _myRigidBody.useGravity = true;
+    }
+
+    private void JumpFromWall()
+    {
+        if (_grabingWall && _jump)
+        {
+
+            ReleaseWall();
+
+            _isGrounded = false;
+            _jump = false;
+
+            float power = 15;
+            Vector3 jumpForce = Vector3.up * power;
+
+
+
+            _myRigidBody.AddForce(jumpForce, ForceMode.Impulse);
+           
+        }
+    }
+
+    private void TryToGrabWall()
+    {
+        Vector3 dir = _crouchPos.right;
+        for (int i = 0; i < 8; i++)
+        {
+            RaycastHit hit;
+            
+            if (Physics.Raycast(_crouchPos.position, dir, out hit, 1.5f))
+            {
+                    FPS_Creature c = null;
+                    c = hit.collider.gameObject.GetComponent<FPS_Creature>();
+
+                    if (c == null)
+                    {
+                        _grabingWall = true;
+                        _myRigidBody.useGravity = false;
+                        _myRigidBody.velocity = Vector3.zero;
+
+                        Debug.Log("grabbed a wall");
+
+                        break;
+                    }
+            }
+            //if (_grabingWall) Debug.DrawRay(_crouchPos.position, dir * 3, Color.red, 1f);
+            //else Debug.DrawRay(_crouchPos.position, dir * 1.5f, Color.blue, 1f);
+
+
+            dir = Quaternion.AngleAxis(45, _crouchPos.up) * dir;
+
+        }
+
     }
 
     public void PickUpWeapon(GameObject weaponPrefab, int slot)
