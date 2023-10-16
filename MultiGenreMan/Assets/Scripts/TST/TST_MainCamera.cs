@@ -26,16 +26,19 @@ public class TST_MainCamera : MonoBehaviour
     private Camera _myCamera;
 
     [SerializeField]
-    GameObject _cursorIndicator;
+    TST_cursorIndicator _cursorIndicator;
 
     private Vector3 _clickPosition;
+    private Vector3 _mousePos;
+    private float _distMouse;
+
 
     private void Awake()
     {
         _player = _playerObject.gameObject.GetComponent<TST_Player>();
         _myCamera = gameObject.GetComponent<Camera>();
 
-     
+        
     }
 
 
@@ -53,7 +56,8 @@ public class TST_MainCamera : MonoBehaviour
 
         _player.GetCamera(this);
 
-
+        _mousePos = Input.mousePosition;
+        _distMouse = 0;
     }
 
     // Update is called once per frame
@@ -64,13 +68,29 @@ public class TST_MainCamera : MonoBehaviour
 
         ZoomCamera();
 
+        
 
         ClickEnvironment();
+
+        MouseMapNavigation();
+    }
+
+    private void FixedUpdate()
+    {
+        HoverEnvironment();
     }
 
     //interaction by mouse with the environment
     private void ClickEnvironment()
     {
+
+        //order issuing
+        if (Input.GetButton("Fire2") && _player.IsUnitSelected())
+        {
+            _clickPosition = Input.mousePosition;
+            OrderIssuing();
+        }
+
         //selecting
         if (Input.GetButtonDown("Fire1"))
         {
@@ -80,27 +100,26 @@ public class TST_MainCamera : MonoBehaviour
 
 
 
-        ////order issuing
-        //if (Input.GetButton("Fire2") && _player.IsSomethingSelected())
-        //{
-        //    Ray ray = _myCamera.ScreenPointToRay(Input.mousePosition);
-        //    RaycastHit hit;
 
+     }
 
-        //    if (Physics.Raycast(ray, out hit, 100))
-        //    {
-        //        RTS_PlayerMoveOrder moveOrder = new RTS_PlayerMoveOrder(hit.point);
-        //        //Debug.Log("Movement order Issued");
-        //        _player.IssueOrder(moveOrder);
-        //    }
-        //    else
-        //    {
-        //        Debug.Log("Nothing was clicked on");
-        //    }
+    private void HoverEnvironment()
+    {
 
+            Ray ray = _myCamera.ScreenPointToRay(Input.mousePosition);
+            GameObject g = null;
+            int layerMask = 1 << 4; //use only layer 4
+            RaycastHit hit;
 
+            if (Physics.Raycast(ray, out hit, 100, layerMask))
+            {
+            g = hit.collider.gameObject;
 
-        //}
+                if (g != null)
+                {
+                    _cursorIndicator.GoToSpace(g.transform.position);
+                }
+            }              
 
     }
 
@@ -116,7 +135,6 @@ public class TST_MainCamera : MonoBehaviour
 
         int layerMask = 1 << 4; //use only layer 4
 
-
         if (Physics.Raycast(ray, out hit, 100, layerMask))
         {
             newPos = hit.point;
@@ -125,20 +143,34 @@ public class TST_MainCamera : MonoBehaviour
 
             //Debug.DrawLine(ray.origin, newPos, Color.red, 1);
             //_cursorIndicator.transform.position = newPos;
+            if (g != null) _player.SelectSpace(g);
 
-            _player.SelectSpace(g);
         }
         else
         {
             Debug.Log("Nothing was clicked on");
         }
+    }
 
-        //if (!_player.TryToSelectEntity(g, false))
-        //{
-        //    _cursorIndicator.transform.position = newPos;
-        //}
+    private void OrderIssuing()
+    {
+        Ray ray = _myCamera.ScreenPointToRay(_clickPosition);
+        RaycastHit hit;
+        int layerMask = 1 << 4; //use only layer 4
+        GameObject g = null;
 
+        if (Physics.Raycast(ray, out hit, 100, layerMask))
+        {
+            g = hit.collider.gameObject;
+            //Debug.Log("Movement order Issued");
 
+            if (g != null) _player.IssueMovementOrder(g);
+
+        }
+        else
+        {
+            Debug.Log("Nothing was clicked on");
+        }
     }
 
     //moving the camera with the mouse by dragging to the edges

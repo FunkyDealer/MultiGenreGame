@@ -12,9 +12,11 @@ public class TST_Space : MonoBehaviour
     private int _width;
     private int _length;
 
+    public Vector2Int Space2D { get; private set; }
+
     private float _size;
 
-    private Vector3 _pos;
+    public Vector3 Space3D { get; private set; }
 
     private MeshRenderer _myMesh;
     private Color _originalColor;
@@ -22,6 +24,8 @@ public class TST_Space : MonoBehaviour
     private Color _selectedColor;
     [SerializeField]
     private Color _hoverColor;
+
+    private TST_Unit _currentUnit = null;
 
     private void Awake()
     {
@@ -50,7 +54,7 @@ public class TST_Space : MonoBehaviour
         this._width = info._width;
         this._length = info._length;
         this._size = info._size;
-        this._pos = info._pos;
+        this.Space3D = info._pos;
         this._topLeft = info._topLeft;
         this._topRight = info._topRight;
         this._bottomLeft = info._bottomLeft;
@@ -62,20 +66,20 @@ public class TST_Space : MonoBehaviour
         //transform.localScale = new Vector3(_size, transform.localScale.y, _size);
         transform.localScale = new Vector3(_size, _size, transform.localScale.z);
 
-
+        Space2D = new Vector2Int(_width, _length);
 
     }
 
     public TST_SpaceInfo GetSpaceInfo()
     {
-        return new TST_SpaceInfo(_pos, _width, _length, _size);
+        return new TST_SpaceInfo(Space3D, _width, _length, _size);
     }
 
     public TST_SpaceInfo OnClick()
     {
         _myMesh.material.color = _selectedColor;
 
-        return new TST_SpaceInfo(_pos, _width, _length, _size);
+        return new TST_SpaceInfo(Space3D, _width, _length, _size);
     }
 
     public void OnHoverEnter()
@@ -91,7 +95,20 @@ public class TST_Space : MonoBehaviour
     public void Deselect()
     {
         _myMesh.material.color = _originalColor;
+        TST_GameManager.DestroyMovementIndicators();
     }
 
+    public TST_Unit GetUnit() => _currentUnit;
 
+    public bool IsOccupied() => _currentUnit != null;
+
+    public void SetUnit(TST_Unit u)
+    {
+        _currentUnit = u;
+    }
+
+    public void RemoveUnit()
+    {
+        _currentUnit = null;
+    }
 }

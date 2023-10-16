@@ -2,34 +2,30 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TST_Player : MonoBehaviour
+public class TST_Player : TST_Controller
 {
     private TST_MainCamera _camera;
-
-    [SerializeField]
-    private int _team = 1;
-
-    public int Team { get; private set; }
-    private int _unitCount = 0;
-    private int _buildingCount = 0;
+  
 
     [SerializeField]
     private int _cameraPanSpeed = 20;
 
     private Vector2 _movementInput = Vector2.zero;
 
-
     [SerializeField]
     GameObject _cursorIndicator;
 
-
+    TST_Space _currentlySelectedSpace = null;
 
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
-  
+        Team = 1;
 
-        Team = _team;
+
+        base.Start();
+
+        
 
 
 
@@ -81,7 +77,7 @@ public class TST_Player : MonoBehaviour
         return false;
     }
 
-    TST_Space _currentlySelectedSpace = null;
+
 
     public void SelectSpace(GameObject g)
     {
@@ -97,12 +93,54 @@ public class TST_Player : MonoBehaviour
 
             _currentlySelectedSpace = newSpace;
             newSpace.OnClick();
-
-
+            SelectUnit();
+            
         }
+    }
+
+    private void SelectUnit()
+    {
+        if (_currentlySelectedSpace.IsOccupied())
+        {
+            TST_GameManager.CreateMovementIndicators(_currentlySelectedSpace.GetUnit());
+        }
+
 
 
     }
 
-   // public bool IsSomethingSelected() => _SelectedEntitiesAmmount > 0;
+    public bool IssueMovementOrder(GameObject g) //true if sucesseful, false if uncesseseful
+    {
+        TST_Space s = g.GetComponent<TST_Space>();
+
+        if (s.IsOccupied()) return false;
+        if (s.Space2D == _currentlySelectedSpace.Space2D) return false; //if old space is the same space
+
+        TST_Unit u = _currentlySelectedSpace.GetUnit();
+        if (!u.ValidateMovement(s.Space2D)) return false;
+
+        if (u.MovesLeft > 0) u.TeleportToNewSpace(s.Space2D, s.Space3D);
+
+
+
+        return true;
+    }
+
+    public void DeselectSpace()
+    {
+        _currentlySelectedSpace = null;
+    }
+
+    public bool IsUnitSelected()
+    {
+        if (_currentlySelectedSpace == null) return false;
+
+        TST_Unit u = _currentlySelectedSpace.GetUnit();
+
+        return u != null && u.Team == Team;
+    } 
+
+
+
+
 }

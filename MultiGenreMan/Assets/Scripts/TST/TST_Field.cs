@@ -54,8 +54,8 @@ public class TST_Field : MonoBehaviour
 
             }
         }
+        StartCoroutine(TST_GameManager.StartUnits()); //tell game manager to start units and put them in the correct place
 
-        TST_GameManager.StartUnits(); //tell game manager to start units and put them in the correct place
     }
 
     // Update is called once per frame
@@ -86,4 +86,29 @@ public class TST_Field : MonoBehaviour
         return _grid[space.x, space.y].GetSpaceInfo();
     }
 
+    public static TST_Unit GetUnitInSpace(Vector2Int space)
+    {
+        return _grid[space.x, space.y].GetUnit();
+    }
+
+    public static void SetUnitInSpace(Vector2Int space, TST_Unit u)
+    {
+        _grid[space.x, space.y].SetUnit(u);
+    }
+
+    public static void RemoveUnitFromSpace(Vector2Int space)
+    {
+        _grid[space.x, space.y].RemoveUnit();
+    }
+
+    public static float GetSpaceSize() => _spaceSize;
+
+    public static Vector3 GetSpace3D(Vector2Int s) => _grid[s.x, s.y].Space3D;
+
+    public static bool ValidateSpace2D(Vector2Int s)
+    {
+
+        return (s.x < _width && s.x >= 0 && s.y < _length && s.y >= 0);
+
+    }
 }
