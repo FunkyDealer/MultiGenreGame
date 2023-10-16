@@ -26,5 +26,6 @@ the TBT game has a top down camera that the player can move around with WASD. it
 the player can select squares by left clicking on them. 
 when the game starts, a unit on the player's team will spawn on the bottom right of the field. move the camera to see it, and click on the square where it the unit is.
 you can move the unit by right clicking on one of the squares that light up.
+Press enter to end turns
 
 (the files for the TBT game are named "TST" by mistake)
