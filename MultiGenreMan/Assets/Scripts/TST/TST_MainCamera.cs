@@ -69,8 +69,7 @@ public class TST_MainCamera : MonoBehaviour
         ZoomCamera();
 
         
-
-        ClickEnvironment();
+        if (_player.MyTurn) ClickEnvironment();
 
         MouseMapNavigation();
     }

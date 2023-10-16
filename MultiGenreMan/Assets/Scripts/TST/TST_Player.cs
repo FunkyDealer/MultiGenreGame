@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class TST_Player : TST_Controller
 {
-    private TST_MainCamera _camera;
-  
+    private TST_MainCamera _camera;  
 
     [SerializeField]
     private int _cameraPanSpeed = 20;
@@ -16,6 +15,8 @@ public class TST_Player : TST_Controller
     GameObject _cursorIndicator;
 
     TST_Space _currentlySelectedSpace = null;
+
+
 
     // Start is called before the first frame update
     protected override void Start()
@@ -38,6 +39,11 @@ public class TST_Player : TST_Controller
         _movementInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
 
 
+
+        if (MyTurn && Input.GetButtonDown("Submit")) {
+            StartCoroutine(EndMyTurn());
+        }
+
     }
 
     private void FixedUpdate()
@@ -56,6 +62,16 @@ public class TST_Player : TST_Controller
         //}
 
 
+    }
+
+
+    protected override IEnumerator EndMyTurn()
+    {
+        DeselectSpace();
+
+        return base.EndMyTurn();
+
+        
     }
 
     public void GetCamera(TST_MainCamera mainCamera) => this._camera = mainCamera;
@@ -87,8 +103,7 @@ public class TST_Player : TST_Controller
         {
             if (_currentlySelectedSpace != null)
             {
-                _currentlySelectedSpace.Deselect();
-                _currentlySelectedSpace = null;
+                DeselectSpace();
             }
 
             _currentlySelectedSpace = newSpace;
@@ -119,7 +134,11 @@ public class TST_Player : TST_Controller
         TST_Unit u = _currentlySelectedSpace.GetUnit();
         if (!u.ValidateMovement(s.Space2D)) return false;
 
-        if (u.MovesLeft > 0) u.TeleportToNewSpace(s.Space2D, s.Space3D);
+        if (u.MovesLeft > 0)
+        {
+            u.TeleportToNewSpace(s.Space2D, s.Space3D);
+            DeselectSpace();
+        }
 
 
 
@@ -128,7 +147,11 @@ public class TST_Player : TST_Controller
 
     public void DeselectSpace()
     {
-        _currentlySelectedSpace = null;
+        if (_currentlySelectedSpace != null)
+        {
+            _currentlySelectedSpace.Deselect();
+            _currentlySelectedSpace = null;
+        }
     }
 
     public bool IsUnitSelected()

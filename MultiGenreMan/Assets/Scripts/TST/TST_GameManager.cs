@@ -71,7 +71,7 @@ public class TST_GameManager : MonoBehaviour
             u.TeleportToNewSpace(space, newSpace3d);
 
         }
-
+        
         EndTurn();
     }
 
@@ -91,15 +91,20 @@ public class TST_GameManager : MonoBehaviour
 
         if (CurrentPlayer > maxPlayers) CurrentPlayer = 1;
 
+        
         StartTurn(CurrentPlayer);
     }
 
     public static void StartTurn(int team)
     {
+        Debug.Log($"it's now player {team}'s turn");
+
         foreach (var u in _units)
         {
             if (u.Team == team) u.resetTurn();
         }
+
+        _players[team].StartMyTurn();
     }
 
     public static void CreateMovementIndicators(TST_Unit u)
