@@ -81,9 +81,9 @@ public class TST_Field : MonoBehaviour
         return space;
     }
 
-    public static TST_SpaceInfo GetSpaceInfo(Vector2Int space)
+    public static TST_Space GetSpace(Vector2Int space)
     {
-        return _grid[space.x, space.y].GetSpaceInfo();
+        return _grid[space.x, space.y];
     }
 
     public static TST_Unit GetUnitInSpace(Vector2Int space)

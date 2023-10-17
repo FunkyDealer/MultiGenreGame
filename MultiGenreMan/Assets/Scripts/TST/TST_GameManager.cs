@@ -65,8 +65,7 @@ public class TST_GameManager : MonoBehaviour
             if (space.x < 0) space.x = 0;
             if (space.y < 0) space.y = 0;   
             
-            TST_SpaceInfo newSpace = TST_Field.GetSpaceInfo(space);
-            Vector3 newSpace3d = newSpace._pos;
+            Vector3 newSpace3d = TST_Field.GetSpace(space).Space3D;
 
             u.TeleportToNewSpace(space, newSpace3d);
 
@@ -78,6 +77,8 @@ public class TST_GameManager : MonoBehaviour
     public static void RegisterUnit(TST_Unit u)
     {
         _units.Add(u);
+
+        _players[u.Team].RegisterUnit(u);
     }
 
     public static void RegisterPlayer(int team, TST_Controller c)
@@ -129,6 +130,17 @@ public class TST_GameManager : MonoBehaviour
             }
         }
     }
+
+    public static void KillUnit(TST_Unit u)
+    {
+        _units.Remove(u);
+        _players[u.Team].RemoveUnit(u);
+
+        Destroy(u.gameObject);
+
+    }
+
+
 
     public static void DestroyMovementIndicators()
     {

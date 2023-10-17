@@ -84,7 +84,7 @@ public class TST_MainCamera : MonoBehaviour
     {
 
         //order issuing
-        if (Input.GetButton("Fire2") && _player.IsUnitSelected())
+        if (Input.GetButtonDown("Fire2") && _player.IsUnitSelected())
         {
             _clickPosition = Input.mousePosition;
             OrderIssuing();
@@ -161,9 +161,8 @@ public class TST_MainCamera : MonoBehaviour
         if (Physics.Raycast(ray, out hit, 100, layerMask))
         {
             g = hit.collider.gameObject;
-            //Debug.Log("Movement order Issued");
 
-            if (g != null) _player.IssueMovementOrder(g);
+            if (g != null) _player.IssueOrder(g);
 
         }
         else

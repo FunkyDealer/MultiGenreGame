@@ -16,7 +16,12 @@ public class TST_Player : TST_Controller
 
     TST_Space _currentlySelectedSpace = null;
 
+    protected override void Awake()
+    {
+        base.Awake();
 
+
+    }
 
     // Start is called before the first frame update
     protected override void Start()
@@ -124,25 +129,35 @@ public class TST_Player : TST_Controller
 
     }
 
-    public bool IssueMovementOrder(GameObject g) //true if sucesseful, false if uncesseseful
+    public bool IssueOrder(GameObject g)
     {
         TST_Space s = g.GetComponent<TST_Space>();
 
-        if (s.IsOccupied()) return false;
         if (s.Space2D == _currentlySelectedSpace.Space2D) return false; //if old space is the same space
 
-        TST_Unit u = _currentlySelectedSpace.GetUnit();
-        if (!u.ValidateMovement(s.Space2D)) return false;
-
-        if (u.MovesLeft > 0)
+        if (s.IsOccupied())
         {
-            u.TeleportToNewSpace(s.Space2D, s.Space3D);
-            DeselectSpace();
+             return IssueAttackOrder(s, _currentlySelectedSpace.GetUnit(), s.GetUnit());
+
         }
+         else return IssueMovementOrder(s);                   
+    }
+
+    private bool IssueAttackOrder(TST_Space s, TST_Unit attacker, TST_Unit defender)
+    {
+        return attacker.AttackEnemy(s, defender);
+    }
+
+    public bool IssueMovementOrder(TST_Space s) //true if sucesseful, false if uncesseseful
+    {
+        TST_Unit u = _currentlySelectedSpace.GetUnit();
+        if (!u.ValidateMovementOrder(s.Space2D)) return false;
 
 
-
+        u.TeleportToNewSpace(s.Space2D, s.Space3D);
+        DeselectSpace();
         return true;
+
     }
 
     public void DeselectSpace()
