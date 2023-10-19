@@ -18,6 +18,8 @@ public class TST_Player : TST_Controller
 
     protected override void Awake()
     {
+        Team = 1;
+
         base.Awake();
 
 
@@ -26,7 +28,7 @@ public class TST_Player : TST_Controller
     // Start is called before the first frame update
     protected override void Start()
     {
-        Team = 1;
+        
 
 
         base.Start();
@@ -46,7 +48,7 @@ public class TST_Player : TST_Controller
 
 
         if (MyTurn && Input.GetButtonDown("Submit")) {
-            StartCoroutine(EndMyTurn());
+            StartCoroutine(EndMyTurn(0.1f));
         }
 
     }
@@ -70,11 +72,11 @@ public class TST_Player : TST_Controller
     }
 
 
-    protected override IEnumerator EndMyTurn()
+    protected override IEnumerator EndMyTurn(float time)
     {
         DeselectSpace();
 
-        return base.EndMyTurn();
+        return base.EndMyTurn(time);
 
         
     }

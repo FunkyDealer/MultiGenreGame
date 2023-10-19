@@ -21,6 +21,7 @@ public class TST_Unit : MonoBehaviour
     protected int movement = 1;
     [SerializeField]
     protected float attackRange = 1;
+    public float GetAttackRange => attackRange;
 
     [SerializeField]
     private int _team = 1;
@@ -34,7 +35,7 @@ public class TST_Unit : MonoBehaviour
     [SerializeField]
     protected int _startingLength = 1;
 
-    public Vector2Int CurrentSpace { get; private set; }
+    public Vector2Int CurrentSpace2D { get; private set; }
 
     [SerializeField]
     protected int _maxMoves = 1;
@@ -50,7 +51,7 @@ public class TST_Unit : MonoBehaviour
 
         gameObject.name = $"Unit (Team {Team}";
 
-        CurrentSpace = new Vector2Int(_startingWidth -1, _startingLength -1);
+        CurrentSpace2D = new Vector2Int(_startingWidth -1, _startingLength -1);
 
         _currentHealth = _maxHealth;
         _currentMana = _maxMana;
@@ -80,12 +81,12 @@ public class TST_Unit : MonoBehaviour
 
     public void TeleportToNewSpace(Vector2Int space2d, Vector3 space3d)
     {
-        TST_Field.RemoveUnitFromSpace(CurrentSpace);
+        TST_Field.RemoveUnitFromSpace(CurrentSpace2D);
 
         Debug.Log($"going to space {space2d}, in {space3d}");
-        CurrentSpace = space2d;
+        CurrentSpace2D = space2d;
 
-        TST_Field.SetUnitInSpace(CurrentSpace, this);
+        TST_Field.SetUnitInSpace(CurrentSpace2D, this);
 
         Vector3 target = new Vector3(space3d.x, transform.position.y, space3d.z);
         transform.LookAt(target);
@@ -107,7 +108,10 @@ public class TST_Unit : MonoBehaviour
 
             Debug.Log("Attacking");
             AttacksLeft--;
-            defender.ReceiveDamage(attackPower);
+            if (defender.ReceiveDamage(attackPower))
+            {
+                //exp?
+            }
 
             return true;
         }
@@ -129,8 +133,8 @@ public class TST_Unit : MonoBehaviour
     public bool ValidateMovement(Vector2Int targetSpace)
     {
         //calculate Cost
-        //float dist = Vector2Int.Distance(s, CurrentSpace);
-        float dist = Mathf.Sqrt(Mathf.Pow(CurrentSpace.x - targetSpace.x, 2) + Mathf.Pow(CurrentSpace.y - targetSpace.y, 2));
+        //float dist = Vector2Int.Distance(CurrentSpace2D, targetSpace);
+        float dist = Mathf.Sqrt(Mathf.Pow(CurrentSpace2D.x - targetSpace.x, 2) + Mathf.Pow(CurrentSpace2D.y - targetSpace.y, 2));
 
         if (dist <= movement) return true;
 
@@ -152,8 +156,22 @@ public class TST_Unit : MonoBehaviour
         }
 
         //calculate cost
-        //float dist = Vector2Int.Distance(s, CurrentSpace);
-        float dist = Mathf.Sqrt(Mathf.Pow(CurrentSpace.x - targetSpace.Space2D.x, 2) + Mathf.Pow(CurrentSpace.y - targetSpace.Space2D.y, 2));
+        //float dist = Vector2Int.Distance(CurrentSpace2D, targetSpace.Space2D);
+        float dist = Mathf.Sqrt(Mathf.Pow(CurrentSpace2D.x - targetSpace.Space2D.x, 2) + Mathf.Pow(CurrentSpace2D.y - targetSpace.Space2D.y, 2));
+
+        if (dist <= attackRange) return true;
+
+        return false;
+    }
+
+    public bool ValidateAttackFast(TST_Unit enemy)
+    {
+        if (AttacksLeft < 1) return false;
+        if (enemy.Team == Team) return false;
+
+        //calculate cost
+        //float dist = Vector2Int.Distance(CurrentSpace2D, enemy.CurrentSpace2D);
+        float dist = Mathf.Sqrt(Mathf.Pow(CurrentSpace2D.x - enemy.CurrentSpace2D.x, 2) + Mathf.Pow(CurrentSpace2D.y - enemy.CurrentSpace2D.y, 2));
 
         if (dist <= attackRange) return true;
 
@@ -166,14 +184,24 @@ public class TST_Unit : MonoBehaviour
         AttacksLeft = _maxAttacks;
     }
 
-    public void ReceiveDamage(int damage)
+    public bool ReceiveDamage(int damage)
     {
         _currentHealth -= damage;
 
         if (_currentHealth <= 0)
         {
             TST_GameManager.KillUnit(this);
+            return true;
         }
+
+        return false;
     }
 
+    public TST_Space GetSpace() => TST_Field.GetSpace(CurrentSpace2D);
+
+    public void MakeImmobile()
+    {
+        MovesLeft = 0;
+    }
+    
 }

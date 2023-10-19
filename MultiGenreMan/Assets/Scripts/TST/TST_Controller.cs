@@ -13,6 +13,8 @@ public class TST_Controller : MonoBehaviour
     protected virtual void Awake()
     {
         _unitList = new List<TST_Unit>();
+
+        TST_GameManager.RegisterPlayer(Team, this);
     }
 
     // Start is called before the first frame update
@@ -20,7 +22,7 @@ public class TST_Controller : MonoBehaviour
     {
 
 
-        TST_GameManager.RegisterPlayer(Team ,this);
+        
     }
 
     // Update is called once per frame
@@ -36,11 +38,11 @@ public class TST_Controller : MonoBehaviour
         MyTurn = true;
     }
 
-    protected virtual IEnumerator EndMyTurn()
+    protected virtual IEnumerator EndMyTurn(float time)
     {
         MyTurn = false;
 
-        yield return 0;
+        yield return new WaitForSeconds(time);
 
         
         TST_GameManager.EndTurn();

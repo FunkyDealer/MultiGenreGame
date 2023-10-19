@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +9,19 @@ public class TST_Space : MonoBehaviour
     private Vector3 _topRight;
     private Vector3 _bottomLeft;
     private Vector3 _bottomRight;
+
+    //protected Vector2Int up = Vector2Int.zero;
+    //protected Vector2Int down = Vector2Int.zero;
+    //protected Vector2Int left = Vector2Int.zero;
+    //protected Vector2Int right = Vector2Int.zero;
+
+    public TST_Space Up { get; private set; } = null;
+    
+    public TST_Space Down { get; private set; } = null;
+    public TST_Space Left { get; private set; } = null;
+    public TST_Space Right { get; private set; } = null;
+
+    public List<TST_Space> Neighbours { get; private set; } = new List<TST_Space>();
 
     private int _width;
     private int _length;
@@ -68,6 +82,12 @@ public class TST_Space : MonoBehaviour
 
         Space2D = new Vector2Int(_width, _length);
 
+        
+    }
+
+    public void PostGridCreation()
+    {
+        ComputeSides();
     }
 
     public TST_SpaceInfo GetSpaceInfo()
@@ -111,4 +131,27 @@ public class TST_Space : MonoBehaviour
     {
         _currentUnit = null;
     }
+
+    private void ComputeSides()
+    {
+        Vector2Int up = new Vector2Int(Space2D.x, Space2D.y + 1);
+        Vector2Int down = new Vector2Int(Space2D.x, Space2D.y - 1);
+        Vector2Int right = new Vector2Int(Space2D.x + 1, Space2D.y);
+        Vector2Int left = new Vector2Int(Space2D.x - 1, Space2D.y);
+
+        if (TST_Field.ValidateSpace2D(up)) Up = TST_Field.GetSpace(up);
+        if (TST_Field.ValidateSpace2D(down)) Down = TST_Field.GetSpace(down);
+        if (TST_Field.ValidateSpace2D(right)) Right = TST_Field.GetSpace(right);
+        if (TST_Field.ValidateSpace2D(left)) Left = TST_Field.GetSpace(left);
+
+        if (Up != null) Neighbours.Add(Up);
+        if (Down != null) Neighbours.Add(Down);
+        if (Right != null) Neighbours.Add(Right);
+        if (Left != null) Neighbours.Add(Left);
+    }
+
+
+
+
+
 }

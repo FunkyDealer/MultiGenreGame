@@ -8,14 +8,14 @@ public class TST_GameManager : MonoBehaviour
     private static TST_GameManager _instance;
     public static TST_GameManager inst { get { return _instance; } }
 
-    private static List<TST_Unit> _units;
-    private static Dictionary<int,TST_Controller> _players; 
+    private static List<TST_Unit> _units = new List<TST_Unit>();
+    private static Dictionary<int,TST_Controller> _players = new Dictionary<int, TST_Controller>();
 
     public static int CurrentPlayer { get; private set; } = 0;
 
     public static int maxPlayers { get; private set; } = 2;
 
-    private static List<GameObject> _movementIndicators;
+    private static List<GameObject> _movementIndicators = new List<GameObject>();
 
     [SerializeField]
     private GameObject _movementIndicatorObj;
@@ -32,9 +32,7 @@ public class TST_GameManager : MonoBehaviour
             _instance = this;
         }
 
-        _units = new List<TST_Unit>();
-        _players = new Dictionary<int, TST_Controller>();
-        _movementIndicators = new List<GameObject>();
+
     }
 
     // Start is called before the first frame update
@@ -57,7 +55,7 @@ public class TST_GameManager : MonoBehaviour
         Debug.Log($"starting units, count: {_units.Count}");
         foreach (var u in _units)
         {
-            Vector2Int space = u.CurrentSpace;
+            Vector2Int space = u.CurrentSpace2D;
             
             //sanitization
             if (space.x > TST_Field._width -1) space.x = TST_Field._width -1;
@@ -114,7 +112,7 @@ public class TST_GameManager : MonoBehaviour
         {
             for (int l = -10; l <= 10; l++)
             {
-                Vector2Int s = new Vector2Int(u.CurrentSpace.x + w,  u.CurrentSpace.y + l);
+                Vector2Int s = new Vector2Int(u.CurrentSpace2D.x + w,  u.CurrentSpace2D.y + l);
 
 
                     if (TST_Field.ValidateSpace2D(s) && u.ValidateMovement(s))
@@ -154,8 +152,18 @@ public class TST_GameManager : MonoBehaviour
             _movementIndicators.Clear();
         }
 
+    }
 
+    public static List<TST_Unit> GetListOfEnemies(int myTeam)
+    {
+        List<TST_Unit> enemyList = new List<TST_Unit>();
 
+        foreach (TST_Unit u in _units)
+        {
+            if (u.Team != myTeam) enemyList.Add(u);
+        }
+
+        return enemyList;
     }
 
 }

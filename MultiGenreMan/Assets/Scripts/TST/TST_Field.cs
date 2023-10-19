@@ -35,8 +35,6 @@ public class TST_Field : MonoBehaviour
         _length = _LENGTH;
         _spaceSize = _SIZE;
         _spacePrefab = _SPACEPREFAB;
-
-
     }
 
     // Start is called before the first frame update
@@ -54,6 +52,12 @@ public class TST_Field : MonoBehaviour
 
             }
         }
+
+        foreach (var s in _grid)
+        {
+            s.PostGridCreation();
+        }
+
         StartCoroutine(TST_GameManager.StartUnits()); //tell game manager to start units and put them in the correct place
 
     }
@@ -107,7 +111,6 @@ public class TST_Field : MonoBehaviour
 
     public static bool ValidateSpace2D(Vector2Int s)
     {
-
         return (s.x < _width && s.x >= 0 && s.y < _length && s.y >= 0);
 
     }
