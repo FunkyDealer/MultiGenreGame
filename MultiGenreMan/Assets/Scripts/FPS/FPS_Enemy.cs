@@ -24,9 +24,13 @@ public class FPS_Enemy : FPS_Creature
     public override void ReceiveDamage(int damage)
     {
         _currentHealth -= damage;
+        FloatingTexTManager.inst.CreateText(transform.position, $"-{damage}", 0);
+
         if (_currentHealth <= 0)
         {
             _currentHealth = 0;
+
+            FloatingTexTManager.inst.CreateText(transform.position, $"Killed", 0.5f);
 
             Destroy(gameObject);
         }

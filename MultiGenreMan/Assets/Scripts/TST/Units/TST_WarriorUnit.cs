@@ -10,6 +10,8 @@ public class TST_WarriorUnit : TST_Unit
     protected override void Awake()
     {
         base.Awake();
+
+        gameObject.name = $"Warrior (Team {Team})";
     }
 
 

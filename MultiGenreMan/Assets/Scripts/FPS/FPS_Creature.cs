@@ -29,6 +29,7 @@ public class FPS_Creature : MonoBehaviour
     public virtual void ReceiveDamage(int damage)
     {
 
+
     }
 
 }

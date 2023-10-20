@@ -19,6 +19,7 @@ public class TST_GameManager : MonoBehaviour
 
     [SerializeField]
     private GameObject _movementIndicatorObj;
+    public GameObject GetMovementIndicatorObj => _movementIndicatorObj;
 
     private void Awake()
     {       
@@ -98,36 +99,17 @@ public class TST_GameManager : MonoBehaviour
     {
         Debug.Log($"it's now player {team}'s turn");
 
+        TST_UIController.inst.SetTurnIndicator(team);
+
         foreach (var u in _units)
         {
             if (u.Team == team) u.resetTurn();
         }
 
         _players[team].StartMyTurn();
-    }
-
-    public static void CreateMovementIndicators(TST_Unit u)
-    {
-        for (int w = -10; w <= 10; w++)
-        {
-            for (int l = -10; l <= 10; l++)
-            {
-                Vector2Int s = new Vector2Int(u.CurrentSpace2D.x + w,  u.CurrentSpace2D.y + l);
+    }  
 
 
-                    if (TST_Field.ValidateSpace2D(s) && u.ValidateMovement(s))
-                    {
-                        Vector3 pos = TST_Field.GetSpace3D(s);
-
-                        GameObject g = Instantiate(inst._movementIndicatorObj, pos, inst._movementIndicatorObj.transform.rotation);
-                        g.transform.localScale = new Vector3(TST_Field.GetSpaceSize(), TST_Field.GetSpaceSize(), g.transform.localScale.z);
-                        _movementIndicators.Add(g);
-                    }
-                
-
-            }
-        }
-    }
 
     public static void KillUnit(TST_Unit u)
     {
@@ -138,7 +120,10 @@ public class TST_GameManager : MonoBehaviour
 
     }
 
-
+    public static void AddMovementIndicator(GameObject m)
+    {
+        _movementIndicators.Add(m);
+    }
 
     public static void DestroyMovementIndicators()
     {

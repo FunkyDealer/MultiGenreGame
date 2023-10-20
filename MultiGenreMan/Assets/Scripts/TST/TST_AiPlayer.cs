@@ -10,7 +10,9 @@ public class TST_AiPlayer : TST_Controller
 
     TST_Unit _currentlySelectedUnit = null;
 
-    bool _possibleMoves = true;
+
+    bool _commanding = false;
+
 
     protected override void Awake()
     {
@@ -42,7 +44,8 @@ public class TST_AiPlayer : TST_Controller
     {
         base.StartMyTurn();
 
-        _possibleMoves = true;
+
+        _commanding = true;
 
         AILogic();
 
@@ -71,7 +74,6 @@ public class TST_AiPlayer : TST_Controller
 
     private IEnumerator AttackOrder()
     {
-
         Tuple<TST_Unit, TST_Unit> pairing = CheckForPossibleAttacks();
 
         if (pairing != null)
@@ -110,7 +112,21 @@ public class TST_AiPlayer : TST_Controller
             StartCoroutine(MoveOrder()); //try to move another unit
         }
 
+        _commanding = false;
         yield return 0;
+    }
+
+    protected override IEnumerator EndMyTurn(float time)
+    {
+        yield return new WaitUntil( () => !_commanding );
+
+        MyTurn = false;
+
+        yield return new WaitForSeconds(time);
+
+
+        TST_GameManager.EndTurn();
+
     }
 
     private TST_Unit GetUnitThatCanMove()
@@ -175,11 +191,13 @@ public class TST_AiPlayer : TST_Controller
     //seen spaces are the spaces that were already seen
     public void RecursiveAICheckMovement(TST_Space space, ref List<TST_Space> spaces, ref List<int> SeenSpaces, TST_Unit u)
     {
+        if (!SeenSpaces.Contains(space.GetInstanceID()))
+        { 
         SeenSpaces.Add(space.GetInstanceID());
 
-        if (!space.IsOccupied() && u.ValidateMovement(space.Space2D))
+        if (u.ValidateMovement(space.Space2D))
         {
-            spaces.Add(space);
+            if (!space.IsOccupied()) spaces.Add(space);
 
             foreach (TST_Space s in space.Neighbours)
             {
@@ -187,6 +205,7 @@ public class TST_AiPlayer : TST_Controller
 
             }
         }
+    }
     }
 
     private TST_Space GetClosestSpaceTo(List<TST_Space> spaces, TST_Unit target)
@@ -196,7 +215,6 @@ public class TST_AiPlayer : TST_Controller
 
         if (spaces.Count > 1)
         {
-
             foreach (var s in spaces)
             {
                 float dist = Vector2Int.Distance(s.Space2D, target.CurrentSpace2D);

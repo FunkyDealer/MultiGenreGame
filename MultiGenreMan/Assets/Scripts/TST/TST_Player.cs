@@ -124,11 +124,12 @@ public class TST_Player : TST_Controller
     {
         if (_currentlySelectedSpace.IsOccupied())
         {
-            TST_GameManager.CreateMovementIndicators(_currentlySelectedSpace.GetUnit());
+            TST_Unit u = _currentlySelectedSpace.GetUnit();
+
+            FloatingTexTManager.inst.CreateText(_currentlySelectedSpace.GetUnit().transform.position, "Selected", 0);
+            u.CreateMovementIndicators();
+            TST_UIController.inst.SetUnitTextBox(_currentlySelectedSpace.GetUnit());
         }
-
-
-
     }
 
     public bool IssueOrder(GameObject g)
@@ -137,12 +138,15 @@ public class TST_Player : TST_Controller
 
         if (s.Space2D == _currentlySelectedSpace.Space2D) return false; //if old space is the same space
 
-        if (s.IsOccupied())
-        {
-             return IssueAttackOrder(s, _currentlySelectedSpace.GetUnit(), s.GetUnit());
+        bool result = false;
 
-        }
-         else return IssueMovementOrder(s);                   
+        if (s.IsOccupied()) result = IssueAttackOrder(s, _currentlySelectedSpace.GetUnit(), s.GetUnit());
+        else result = IssueMovementOrder(s);
+
+
+        TST_UIController.inst.UpdateUnitTextBox(s.GetUnit());
+
+        return result;
     }
 
     private bool IssueAttackOrder(TST_Space s, TST_Unit attacker, TST_Unit defender)

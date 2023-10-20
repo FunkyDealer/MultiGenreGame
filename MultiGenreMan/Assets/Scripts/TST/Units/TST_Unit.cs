@@ -49,7 +49,7 @@ public class TST_Unit : MonoBehaviour
     {
         Team = _team;
 
-        gameObject.name = $"Unit (Team {Team}";
+        gameObject.name = $"Unit (Team {Team})";
 
         CurrentSpace2D = new Vector2Int(_startingWidth -1, _startingLength -1);
 
@@ -78,6 +78,47 @@ public class TST_Unit : MonoBehaviour
     {
 
     }
+    public void CreateMovementIndicators()
+    {
+        List<int> visited = new List<int>();
+        visited.Add(GetSpace().GetInstanceID());
+
+        foreach (var s in GetSpace().Neighbours)
+        {
+            RecursiveIndicatorBuilder(s, visited);
+        }
+        visited.Clear();
+
+    }
+
+    //recursive function that goes to each space and checks if it's a valid move
+    //seen spaces are the spaces that were already seen
+    private void RecursiveIndicatorBuilder(TST_Space space, List<int> visited)
+    {
+        if (!visited.Contains(space.GetInstanceID()))
+        {
+            visited.Add(space.GetInstanceID());
+
+            if (ValidateMovement(space.Space2D))
+            {
+                if (!space.IsOccupied())
+                {
+                    GameObject g = Instantiate(TST_GameManager.inst.GetMovementIndicatorObj, space.Space3D, TST_GameManager.inst.GetMovementIndicatorObj.transform.rotation);
+                    g.transform.localScale = new Vector3(TST_Field.GetSpaceSize(), TST_Field.GetSpaceSize(), g.transform.localScale.z);
+                    TST_GameManager.AddMovementIndicator(g);
+                }
+
+                foreach (TST_Space s in space.Neighbours)
+                {
+                    if (!visited.Contains(s.GetInstanceID()))
+                    {
+                        RecursiveIndicatorBuilder(s, visited);
+                    }
+                }
+            }
+        }
+    }
+
 
     public void TeleportToNewSpace(Vector2Int space2d, Vector3 space3d)
     {
@@ -94,8 +135,6 @@ public class TST_Unit : MonoBehaviour
         transform.position = target;
 
         MovesLeft--;
-
-
     }
 
     public bool AttackEnemy(TST_Space enemySpace,TST_Unit defender)
@@ -188,8 +227,11 @@ public class TST_Unit : MonoBehaviour
     {
         _currentHealth -= damage;
 
+        FloatingTexTManager.inst.CreateText(transform.position, new string($"-{damage}"), 0f);
+
         if (_currentHealth <= 0)
         {
+            FloatingTexTManager.inst.CreateText(transform.position, new string($"Killed {gameObject.name}"), 0.5f);
             TST_GameManager.KillUnit(this);
             return true;
         }
