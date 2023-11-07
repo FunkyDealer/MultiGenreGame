@@ -107,6 +107,7 @@ MonoBehaviour:
   _weaponFireDelay: 0.1
   _maxRange: 200
   _spread: 5
+  _ammoOnPickup: 50
 --- !u!1 &8312840705029560480
 GameObject:
   m_ObjectHideFlags: 0

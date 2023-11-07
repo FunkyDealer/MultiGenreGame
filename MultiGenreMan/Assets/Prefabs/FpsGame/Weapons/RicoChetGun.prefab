@@ -107,6 +107,7 @@ MonoBehaviour:
   _weaponFireDelay: 0.3
   _maxRange: 100
   _spread: 5
+  _ammoOnPickup: 10
   _maxRicochets: 50
 --- !u!1 &8312840705029560480
 GameObject:

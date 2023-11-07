@@ -346,6 +346,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _maxHealth: 100
   _movSpeed: 10
+  _maxArmour: 100
   _movSmoothLerp: 0.03
   _feet: {fileID: 8678459236799609089}
   _jumpPower: 3
@@ -353,8 +354,10 @@ MonoBehaviour:
   _cameraTransform: {fileID: 8678459236891331127}
   _crouchPos: {fileID: 2981721864279448713}
   _standUpPos: {fileID: 83501475}
+  _eyesTransform: {fileID: 8678459237532675593}
   _weaponPos: {fileID: 1775179416297796409}
   _laserProjectilePrefab: {fileID: 8183474111835587106, guid: f888b17463faee143aa08255ac97b4d9, type: 3}
+  _crouchSpeed: 10
 --- !u!136 &8678459237252674031
 CapsuleCollider:
   m_ObjectHideFlags: 0

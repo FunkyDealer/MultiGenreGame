@@ -107,6 +107,7 @@ MonoBehaviour:
   _weaponFireDelay: 0.6
   _maxRange: 100
   _spread: 5
+  _ammoOnPickup: 20
   _pelletAmmout: 5
 --- !u!1 &8312840705029560480
 GameObject:

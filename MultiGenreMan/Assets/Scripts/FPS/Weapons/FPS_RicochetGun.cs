@@ -13,7 +13,7 @@ public class FPS_RicochetGun : FPS_Weapon
     {
         base.Awake();
 
-
+        AmmoType = FPSPlayer.AMMOTYPE.LASER;
     }
 
     // Start is called before the first frame update
@@ -41,6 +41,9 @@ public class FPS_RicochetGun : FPS_Weapon
 
     public override void ShootPrimary(Transform eye)
     {
+        if ((_owner as FPSPlayer).SpendLaser())
+        { 
+
         base.ShootPrimary(eye);
         Tuple<List<Vector3>, FPS_Creature> tuple = CalculateLaserScanTrajectory(eye);
         GameObject projectile = Instantiate(_projectilePrefab, _shootingPoint.position, Quaternion.identity);
@@ -56,6 +59,7 @@ public class FPS_RicochetGun : FPS_Weapon
 
         StopCoroutine(WeaponStabilizingDelay(0));
         StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
+        }
     }
 
     protected Tuple<List<Vector3>, FPS_Creature> CalculateLaserScanTrajectory(Transform eye)
@@ -79,7 +83,7 @@ public class FPS_RicochetGun : FPS_Weapon
             contactPoints[0] = hit.point;
             if (hitEnemy != null) //the shot hit an enemy
             {
-                hitEnemy.ReceiveDamage(_damage);
+                hitEnemy.ReceiveDamage(_damage, contactPoints[0]);
                 result = new Tuple<List<Vector3>, FPS_Creature>(contactPoints, hitEnemy);
             }
             else //the shot didn't hit an enemy, try to ricochet it
@@ -124,7 +128,7 @@ public class FPS_RicochetGun : FPS_Weapon
 
                 if (hitEnemy != null) //the ricochet hit an enemy
                 {
-                    hitEnemy.ReceiveDamage(_damage);                    
+                    hitEnemy.ReceiveDamage(_damage, newContactPoint);                    
                     result = new Tuple<List<Vector3>, FPS_Creature>(contactPoints, hitEnemy);
                 }
                 else //the ricochet didn't hit an enemy, try to ricochet it again
@@ -151,5 +155,13 @@ public class FPS_RicochetGun : FPS_Weapon
 
 
     }
+
+    public override void PickUpWeapon(FPS_Creature owner)
+    {
+        base.PickUpWeapon(owner);
+
+        (owner as FPSPlayer).ReceiveLasers(_ammoOnPickup);
+    }
+
 }
 

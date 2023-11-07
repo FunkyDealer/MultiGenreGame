@@ -41,6 +41,12 @@ public class ARPG_Player : ARPG_Creature
 
         _myNavMeshAgent.speed = _moveSpeed;
         _myNavMeshAgent.angularSpeed = _turnSpeed;
+
+        ARPG_UIController.inst.UpdateHealth(_currentHealth);
+        ARPG_UIController.inst.UpdateMana(_currentMana);
+
+        ARPG_UIController.inst.AddObjective("Destroy all enemies");
+
     }
 
     // Update is called once per frame

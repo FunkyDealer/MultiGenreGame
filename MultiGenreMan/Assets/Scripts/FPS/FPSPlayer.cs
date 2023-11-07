@@ -19,7 +19,7 @@ public class FPSPlayer : FPS_Creature
     private Rigidbody _myRigidBody;
     private CapsuleCollider _myCollider;
 
-    
+
     //camera stuff
     [SerializeField, Min(0.1f)]
     private float _sensitivity = 10F; //Mouse Sensitivity
@@ -32,7 +32,6 @@ public class FPSPlayer : FPS_Creature
     private Quaternion _cameraOriginalRotation;
     private Quaternion _bodyOriginalRotation;
 
-    
     //Shooting
     [SerializeField]
     private Transform _cameraTransform;
@@ -43,14 +42,12 @@ public class FPSPlayer : FPS_Creature
     [SerializeField]
     private Transform _eyesTransform;
 
-
-
     [SerializeField]
     private Transform _weaponPos;
     private List<FPS_Weapon> _heldWeapons;
-    
 
     private FPS_Weapon _currentlySelectedWeapon;
+    public FPS_Weapon CurrentWeapon => _currentlySelectedWeapon;
     [SerializeField]
     GameObject _laserProjectilePrefab;
     private bool _canShoot = true;
@@ -61,6 +58,7 @@ public class FPSPlayer : FPS_Creature
     private bool _tryingToGrabWall = false;
     private bool _grabingWall = false;
 
+    private bool _interact = false;
     private bool _crouch = false;
     private bool _jump = false;
     private bool _firePrimary = false;
@@ -71,6 +69,25 @@ public class FPSPlayer : FPS_Creature
     private List<FPS_Weapon>[] _slots;
     private int _currentlySelectedSlot = 0;
     private int _currentlySelectedLocalSlot = 1;
+
+    public readonly int MaxBullets = 200;
+    public readonly int MaxPellets = 50;
+    public readonly int MaxLasers = 40;
+
+    private int _currentBullets = 0;
+    public int CurrentBullets => _currentBullets;
+
+    private int _currentPellets = 0;
+    public int CurrentPellets => _currentPellets;
+
+    private int _currentLasers = 0;
+    public int CurrentLasers => _currentLasers;
+
+    public enum AMMOTYPE {
+        BULLET,
+        PELLET,
+        LASER
+     }
 
 
     private void Awake()
@@ -101,6 +118,8 @@ public class FPSPlayer : FPS_Creature
 
         Cursor.lockState = CursorLockMode.Locked;
 
+        FPS_UIController.inst.UpdateArmour(_currentArmour);
+        FPS_UIController.inst.UpdateHealth(_currentHealth);
     }
 
 
@@ -133,7 +152,10 @@ public class FPSPlayer : FPS_Creature
 
         GrabOnToWall();
 
-        Crouch();        
+        Crouch();
+
+        CheckInteract();
+        Interact();
 
         ResetInputs();
 
@@ -152,6 +174,7 @@ public class FPSPlayer : FPS_Creature
 
     private void ResetInputs()
     {
+        _interact = false;
         _jump = false;
         _firePrimary = false;
         _fireSecondary = false;
@@ -166,6 +189,11 @@ public class FPSPlayer : FPS_Creature
         _mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
 
         _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
+
+        if (Input.GetButtonDown("Interact"))
+        {
+            _interact = true;
+        }
 
         if (Input.GetButtonDown("Jump"))
         {
@@ -259,6 +287,8 @@ public class FPSPlayer : FPS_Creature
         _currentlySelectedWeapon?.SwitchIn();
 
         //Debug.Log($"selecting weapon {currentlySelectedLocalSlot+1} from slot {weaponSlot}");
+
+        UpdateAmmoCounter();
     }
 
     //shooting Function
@@ -277,12 +307,8 @@ public class FPSPlayer : FPS_Creature
             {
                 //Nothing yet
             }
-
         }
-
-    }
-
-   
+    }   
 
     //Player's Movement Input
     private void BodyMovement()
@@ -348,9 +374,6 @@ public class FPSPlayer : FPS_Creature
             _myCollider.height = 2f;
             _myCollider.center = Vector3.zero;
         }
-
-
-
     }
 
     //Camera and Body rotation input
@@ -393,8 +416,6 @@ public class FPSPlayer : FPS_Creature
         _cameraTransform.localRotation = Quaternion.Euler(Vector3.right * _pitch);
 
         transform.rotation *= Quaternion.Euler(_mouseInput.x * _sensitivity * Time.deltaTime * Vector3.up);
-
-
     }
 
     private void CheckForIsGrounded()
@@ -501,18 +522,159 @@ public class FPSPlayer : FPS_Creature
         {
             SelectWeaponFromSlot(slot, 0);
         }
-        //_currentlySelectedWeapon = weapon;       
+        //_currentlySelectedWeapon = weapon;     
         
 
     }
 
-    public override void ReceiveDamage(int damage)
+    public override void ReceiveDamage(int damage, Vector3 contactPoint)
     {
-        base.ReceiveDamage(damage);
+        base.ReceiveDamage(damage, contactPoint);
 
         _currentHealth -= damage;
 
+        if (_currentHealth < 0) _currentHealth = 0;
+
+        FPS_UIController.inst.UpdateHealth(_currentHealth);
+
         Debug.Log("received a hit");
+    }
+
+    public void ReceiveBullets(int quantity)
+    {
+        _currentBullets += quantity;
+
+        if (_currentBullets > MaxBullets) _currentBullets = MaxBullets;
+
+        UpdateAmmoCounter();
+    }
+
+    public void ReceivePellets(int quantity)
+    {
+        _currentPellets += quantity;
+
+        if (_currentPellets > MaxPellets) _currentPellets = MaxPellets;
+
+        UpdateAmmoCounter();
+    }
+
+    public void ReceiveLasers(int quantity)
+    {
+        _currentLasers += quantity;
+
+        if (_currentLasers > MaxLasers) _currentLasers = MaxLasers;
+
+        UpdateAmmoCounter();
+    }
+
+    public bool SpendBullet()
+    {
+        if (_currentBullets <= 0) return false;
+
+        _currentBullets--;
+        FPS_UIController.inst.UpdateAmmoCounter(_currentBullets);
+
+        return true;
+    }
+
+    public bool SpendPellet()
+    {
+        if (_currentPellets <= 0) return false;
+
+        _currentPellets--;
+        FPS_UIController.inst.UpdateAmmoCounter(_currentPellets);
+
+        return true;
+    }
+
+    public bool SpendLaser()
+    {
+        if (_currentLasers <= 0) return false;
+
+        _currentLasers--;
+        FPS_UIController.inst.UpdateAmmoCounter(_currentLasers);
+
+        return true;
+    }
+
+    private void UpdateAmmoCounter()
+    {
+        if (_currentlySelectedWeapon != null)
+        {
+
+            switch (_currentlySelectedWeapon.AmmoType)
+            {
+                case AMMOTYPE.BULLET:
+                    FPS_UIController.inst.StartAmmoCounter(_currentBullets);
+                    break;
+                case AMMOTYPE.PELLET:
+                    FPS_UIController.inst.StartAmmoCounter(_currentPellets);
+                    break;
+                case AMMOTYPE.LASER:
+                    FPS_UIController.inst.StartAmmoCounter(_currentLasers);
+                    break;
+                default:
+                    FPS_UIController.inst.StartAmmoCounter(_currentBullets);
+                    break;
+            }
+        }
+    }
+
+    private void Interact()
+    {
+        if (_interact)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out hit, 3))
+            {
+                if (hit.collider != null)
+                {
+                    FPS_Interactible[] I = hit.collider.gameObject.GetComponents<FPS_Interactible>();
+
+                    foreach (var i in I)
+                    {
+                        i.Interact(this);
+                    }
+                }
+            }
+
+                _interact = false;
+        }
+
+
+    }
+
+    private void CheckInteract()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out hit, 3))
+        {
+            if (hit.collider != null)
+            {
+                FPS_Interactible I = hit.collider.gameObject.GetComponent<FPS_Interactible>();
+
+                if (I != null)
+                {
+                    FPS_UIController.inst.UpdatePromtDisplayer(I.Prompt);
+                }
+                else
+                {
+                    FPS_UIController.inst.UpdatePromtDisplayer(null);
+                }
+
+            }
+            else
+            {
+                FPS_UIController.inst.UpdatePromtDisplayer(null);
+            }
+        }
+        else
+        {
+            FPS_UIController.inst.UpdatePromtDisplayer(null);
+        }
+
+
+
     }
 
 

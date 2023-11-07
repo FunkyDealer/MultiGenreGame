@@ -13,7 +13,7 @@ public class FPS_MachineGun : FPS_Weapon
     {
         base.Awake();
 
-
+        AmmoType = FPSPlayer.AMMOTYPE.BULLET;
     }
 
     // Start is called before the first frame update
@@ -40,22 +40,28 @@ public class FPS_MachineGun : FPS_Weapon
     } 
 
     public override void ShootPrimary(Transform eye)
-    {
-        base.ShootPrimary(eye);
-        Tuple<Vector3, FPS_Creature> tuple = CalculateHitScanTrajectory(eye);
-         GameObject projectile = Instantiate(_projectilePrefab, _shootingPoint.position, Quaternion.identity);
-        FPS_LaserProjectile laser = projectile.GetComponent<FPS_LaserProjectile>();
-        laser.Shooter = _owner;
-        laser.HitPoint = tuple.Item1;
-        laser.HitEntity = tuple.Item2;
+    {    
 
-        _currentRecoil += _recoilIncreasePerShot;
-        if (_currentRecoil > _maxRecoil) _currentRecoil = _maxRecoil;
+        if ((_owner as FPSPlayer).SpendBullet()) 
+        {
+            base.ShootPrimary(eye);
 
-        StartCoroutine(WeaponFireDelay(_weaponFireDelay));
+            Tuple<Vector3, FPS_Creature> tuple = CalculateHitScanTrajectory(eye);
+            GameObject projectile = Instantiate(_projectilePrefab, _shootingPoint.position, Quaternion.identity);
+            FPS_LaserProjectile laser = projectile.GetComponent<FPS_LaserProjectile>();
+            laser.Shooter = _owner;
+            laser.HitPoint = tuple.Item1;
+            laser.HitEntity = tuple.Item2;
 
-        StopCoroutine(WeaponStabilizingDelay(0));
-        StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
+            _currentRecoil += _recoilIncreasePerShot;
+            if (_currentRecoil > _maxRecoil) _currentRecoil = _maxRecoil;
+
+            StartCoroutine(WeaponFireDelay(_weaponFireDelay));
+
+            StopCoroutine(WeaponStabilizingDelay(0));
+            StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
+
+        }
     }
 
     protected override Tuple<Vector3, FPS_Creature> CalculateHitScanTrajectory(Transform eye)
@@ -90,7 +96,7 @@ public class FPS_MachineGun : FPS_Weapon
             contactPoint = hit.point;
             if (hitEnemy != null)
             {
-                hitEnemy.ReceiveDamage(_damage);
+                hitEnemy.ReceiveDamage(_damage, contactPoint);
 
 
             }
@@ -109,6 +115,13 @@ public class FPS_MachineGun : FPS_Weapon
         base.ShootSecondary();
 
 
+    }
+
+    public override void PickUpWeapon(FPS_Creature owner)
+    {
+        base.PickUpWeapon(owner);
+
+        (owner as FPSPlayer).ReceiveBullets(_ammoOnPickup);
     }
 
 }

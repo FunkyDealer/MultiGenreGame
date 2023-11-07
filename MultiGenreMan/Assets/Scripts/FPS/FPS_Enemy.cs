@@ -21,10 +21,10 @@ public class FPS_Enemy : FPS_Creature
         
     }
 
-    public override void ReceiveDamage(int damage)
+    public override void ReceiveDamage(int damage, Vector3 contactPoint)
     {
         _currentHealth -= damage;
-        FloatingTexTManager.inst.CreateText(transform.position, $"-{damage}", 0);
+        FloatingTexTManager.inst.CreateText(contactPoint, $"-{damage}", 0);
 
         if (_currentHealth <= 0)
         {

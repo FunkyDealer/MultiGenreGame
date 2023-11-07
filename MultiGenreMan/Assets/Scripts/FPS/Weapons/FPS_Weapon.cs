@@ -36,6 +36,13 @@ public class FPS_Weapon : MonoBehaviour
     [SerializeField]
     protected float _spread = 5;
 
+    [SerializeField]
+    protected int _ammoOnPickup;
+
+    [SerializeField]
+    public FPSPlayer.AMMOTYPE AmmoType { get; protected set; }
+
+
     protected virtual void Awake()
     {
 
@@ -67,6 +74,8 @@ public class FPS_Weapon : MonoBehaviour
     public virtual void PickUpWeapon(FPS_Creature owner)
     {
         this._owner = owner;
+
+      
     }
 
     public virtual void ShootPrimary(Transform eye)
@@ -138,7 +147,7 @@ public class FPS_Weapon : MonoBehaviour
             contactPoint = hit.point;
             if (hitEnemy != null)
             {
-                hitEnemy.ReceiveDamage(_damage);
+                hitEnemy.ReceiveDamage(_damage, contactPoint);
 
 
             }

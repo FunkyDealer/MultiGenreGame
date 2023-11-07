@@ -13,7 +13,7 @@ public class FPS_ShotGun : FPS_Weapon
     {
         base.Awake();
 
-
+        AmmoType = FPSPlayer.AMMOTYPE.PELLET;
     }
 
     // Start is called before the first frame update
@@ -42,26 +42,28 @@ public class FPS_ShotGun : FPS_Weapon
 
     public override void ShootPrimary(Transform eye)
     {
-        base.ShootPrimary(eye);
-
-
-        for (int i = 0; i < _pelletAmmout; i++)
+        if ((_owner as FPSPlayer).SpendPellet())
         {
-            Tuple<Vector3, FPS_Creature> tuple = CalculateShotgunTrajectory(eye);
-            GameObject projectile = Instantiate(_projectilePrefab, _shootingPoint.position, Quaternion.identity);
-            FPS_LaserProjectile laser = projectile.GetComponent<FPS_LaserProjectile>();
-            laser.Shooter = _owner;
-            laser.HitPoint = tuple.Item1;
-            laser.HitEntity = tuple.Item2;
-        }      
+            base.ShootPrimary(eye);
 
-        _currentRecoil += _recoilIncreasePerShot;
-        if (_currentRecoil > _maxRecoil) _currentRecoil = _maxRecoil;
+            for (int i = 0; i < _pelletAmmout; i++)
+            {
+                Tuple<Vector3, FPS_Creature> tuple = CalculateShotgunTrajectory(eye);
+                GameObject projectile = Instantiate(_projectilePrefab, _shootingPoint.position, Quaternion.identity);
+                FPS_LaserProjectile laser = projectile.GetComponent<FPS_LaserProjectile>();
+                laser.Shooter = _owner;
+                laser.HitPoint = tuple.Item1;
+                laser.HitEntity = tuple.Item2;
+            }
 
-        StartCoroutine(WeaponFireDelay(_weaponFireDelay));
+            _currentRecoil += _recoilIncreasePerShot;
+            if (_currentRecoil > _maxRecoil) _currentRecoil = _maxRecoil;
 
-        StopCoroutine(WeaponStabilizingDelay(0));
-        StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
+            StartCoroutine(WeaponFireDelay(_weaponFireDelay));
+
+            StopCoroutine(WeaponStabilizingDelay(0));
+            StartCoroutine(WeaponStabilizingDelay(_timeToStartStabilizing));
+        }
     }
 
     protected Tuple<Vector3, FPS_Creature> CalculateShotgunTrajectory(Transform eye)
@@ -96,7 +98,7 @@ public class FPS_ShotGun : FPS_Weapon
             contactPoint = hit.point;
             if (hitEnemy != null)
             {
-                hitEnemy.ReceiveDamage(_damage);
+                hitEnemy.ReceiveDamage(_damage, contactPoint);
 
 
             }
@@ -115,5 +117,12 @@ public class FPS_ShotGun : FPS_Weapon
         base.ShootSecondary();
 
 
+    }
+
+    public override void PickUpWeapon(FPS_Creature owner)
+    {
+        base.PickUpWeapon(owner);
+
+        (owner as FPSPlayer).ReceivePellets(_ammoOnPickup);
     }
 }

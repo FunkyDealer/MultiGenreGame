@@ -11,6 +11,10 @@ public class ARPG_Creature : MonoBehaviour
     protected int _currentHealth;
 
     [SerializeField]
+    protected int _maxMana = 50;
+    protected int _currentMana;
+
+    [SerializeField]
     protected float _moveSpeed;
     [SerializeField]
     protected float _turnSpeed = 200f;
@@ -26,13 +30,13 @@ public class ARPG_Creature : MonoBehaviour
         _myRigidBody = GetComponent<Rigidbody>();
         _myNavMeshAgent = GetComponent<NavMeshAgent>(); 
 
-
     }
 
     // Start is called before the first frame update
     protected virtual void Start()
     {
         _currentHealth = _maxHealth;
+        _currentMana = _maxMana;
     }
 
     // Update is called once per frame
@@ -49,12 +53,13 @@ public class ARPG_Creature : MonoBehaviour
 
     public virtual void ReceiveDamage(int damage)
     {
-        Debug.Log($"Current health: {_currentHealth}");
-        Debug.Log($"received {damage} damage");
+ 
         _currentHealth -= damage;
+        FloatingTexTManager.inst.CreateText(this.transform.position, $"-{damage}", 0);
         if (_currentHealth <= 0)
         {
-            Debug.Log($"Current health: {_currentHealth}");
+            FloatingTexTManager.inst.CreateText(this.transform.position, $"died", 0.5f);
+
             _currentHealth = 0;
             Destroy(gameObject);
         }
