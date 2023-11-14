@@ -28,11 +28,17 @@ public class FPS_Creature : MonoBehaviour
         
     }
 
+    public virtual void ReceiveDamage(int damage)
+    {
+
+    }
 
     public virtual void ReceiveDamage(int damage, Vector3 contactPoint)
     {
 
 
     }
+
+
 
 }

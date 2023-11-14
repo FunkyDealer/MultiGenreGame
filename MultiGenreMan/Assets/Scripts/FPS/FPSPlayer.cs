@@ -59,6 +59,7 @@ public class FPSPlayer : FPS_Creature
     private bool _grabingWall = false;
 
     private bool _interact = false;
+    private bool _canInteract = true;
     private bool _crouch = false;
     private bool _jump = false;
     private bool _firePrimary = false;
@@ -89,6 +90,9 @@ public class FPSPlayer : FPS_Creature
         LASER
      }
 
+    private float _lastGroundPos;
+    private float _highestPositon;
+    private bool falling = false;    
 
     private void Awake()
     {
@@ -109,9 +113,7 @@ public class FPSPlayer : FPS_Creature
     // Start is called before the first frame update
     protected override void Start()
     {
-        base.Start();
-        
-        
+        base.Start();      
 
         _cameraOriginalRotation = _cameraTransform.localRotation;
         _bodyOriginalRotation = transform.localRotation;
@@ -120,6 +122,9 @@ public class FPSPlayer : FPS_Creature
 
         FPS_UIController.inst.UpdateArmour(_currentArmour);
         FPS_UIController.inst.UpdateHealth(_currentHealth);
+
+        _lastGroundPos = this.transform.position.y;
+        _highestPositon = 0;
     }
 
 
@@ -159,8 +164,25 @@ public class FPSPlayer : FPS_Creature
 
         ResetInputs();
 
+        if (_isGrounded)
+        {
+            _lastGroundPos = transform.position.y;
+            _highestPositon = 0;
+        }
+        else
+        {
+            if (transform.position.y > _highestPositon) _highestPositon = transform.position.y;
+
+            
+            float fallenDistance = _highestPositon - transform.position.y;
+            if (fallenDistance > 4) falling = true;
+
+
+        }
 
     }
+
+
 
 
     private void LateUpdate()
@@ -190,7 +212,7 @@ public class FPSPlayer : FPS_Creature
 
         _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
 
-        if (Input.GetButtonDown("Interact"))
+        if (Input.GetButton("Interact"))
         {
             _interact = true;
         }
@@ -425,6 +447,8 @@ public class FPSPlayer : FPS_Creature
             {
                 _isGrounded = true;
              Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.green);
+                if (falling) FallDamage();
+                ResetFalling();
              }
             else 
             {
@@ -432,6 +456,15 @@ public class FPSPlayer : FPS_Creature
 
                 Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.red);
             }
+    }
+
+    private void FallDamage()
+    {
+        float fallenDistance = _highestPositon - transform.position.y;
+
+        ReceiveDamage((int)fallenDistance * 2);
+
+        
     }
 
     private void GrabOnToWall()
@@ -472,7 +505,6 @@ public class FPSPlayer : FPS_Creature
            
         }
     }
-
     private void TryToGrabWall()
     {
         Vector3 dir = _crouchPos.right;
@@ -503,7 +535,6 @@ public class FPSPlayer : FPS_Creature
             dir = Quaternion.AngleAxis(45, _crouchPos.up) * dir;
 
         }
-
     }
 
     public void PickUpWeapon(GameObject weaponPrefab, int slot)
@@ -522,9 +553,21 @@ public class FPSPlayer : FPS_Creature
         {
             SelectWeaponFromSlot(slot, 0);
         }
-        //_currentlySelectedWeapon = weapon;     
-        
+        //_currentlySelectedWeapon = weapon;           
 
+    }
+
+    public override void ReceiveDamage(int damage)
+    {
+        base.ReceiveDamage(damage);
+
+        _currentHealth -= damage;
+
+        if (_currentHealth < 0) _currentHealth = 0;
+
+        FPS_UIController.inst.UpdateHealth(_currentHealth);
+
+        Debug.Log("received a hit");
     }
 
     public override void ReceiveDamage(int damage, Vector3 contactPoint)
@@ -538,6 +581,20 @@ public class FPSPlayer : FPS_Creature
         FPS_UIController.inst.UpdateHealth(_currentHealth);
 
         Debug.Log("received a hit");
+    }
+
+    public Tuple<int, int> GetHealthStatus() => new Tuple<int, int>(_maxHealth, _currentHealth);
+
+    public void ReceiveHealth(int ammount)
+    {
+        if (_currentHealth < _maxHealth)
+        {
+            _currentHealth += ammount;
+            if (_currentHealth > _maxHealth) _currentHealth = _maxHealth;
+
+            FPS_UIController.inst.UpdateHealth(_currentHealth);
+        }
+
     }
 
     public void ReceiveBullets(int quantity)
@@ -622,7 +679,7 @@ public class FPSPlayer : FPS_Creature
 
     private void Interact()
     {
-        if (_interact)
+        if (_interact && _canInteract)
         {
             RaycastHit hit;
             if (Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out hit, 3))
@@ -635,13 +692,20 @@ public class FPSPlayer : FPS_Creature
                     {
                         i.Interact(this);
                     }
+
+                    StartCoroutine(IntereractDelay());
                 }
             }
 
                 _interact = false;
         }
+    }
+    private IEnumerator IntereractDelay()
+    {
+        _canInteract = false;
+        yield return new WaitForSeconds(0.5f);
 
-
+        _canInteract = true;
     }
 
     private void CheckInteract()
@@ -672,9 +736,20 @@ public class FPSPlayer : FPS_Creature
         {
             FPS_UIController.inst.UpdatePromtDisplayer(null);
         }
+    }
 
+    private void ResetFalling()
+    {
+        _highestPositon = 0;
+        _lastGroundPos = transform.position.y;
+        falling = false;
+    }
 
+    public void TeleportMeTo(Transform newPos)
+    {
+        this.transform.position = newPos.position;
 
+        ResetFalling();
     }
 
 
