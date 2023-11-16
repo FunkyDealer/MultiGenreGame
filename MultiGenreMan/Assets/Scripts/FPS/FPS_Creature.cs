@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class FPS_Creature : MonoBehaviour
 {
+    protected bool _alive = true;    
+
     [SerializeField]
     protected int _maxHealth; //Max health that the creature can have
     protected int _currentHealth; //Current Health that the creature has
@@ -13,6 +15,8 @@ public class FPS_Creature : MonoBehaviour
     [SerializeField]
     protected int _maxArmour = 100;
     protected int _currentArmour = 0;
+
+    public bool HazardReady { get; private set; } = true;
 
     // Start is called before the first frame update
     protected virtual void Start()
@@ -39,6 +43,24 @@ public class FPS_Creature : MonoBehaviour
 
     }
 
+    public virtual void ReceiveDamageFromHazard(int damage, float delay)
+    {
 
+
+
+    }
+
+    protected virtual void Die()
+    {
+
+    }
+
+    protected IEnumerator ReloadHazardDamage(float time)
+    {
+        HazardReady = false;
+        yield return new WaitForSeconds(time);
+
+        HazardReady = true;
+    }
 
 }

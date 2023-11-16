@@ -88,9 +88,11 @@ public class FPS_UIController : MonoBehaviour
         {
             _promptDisplay.SetActive(true);
             _promptDisplayText.text = s;
-        }
-        
+        }   
+    }
 
-
+    public void DeactivateHUD()
+    {
+        this.gameObject.SetActive(false);
     }
 }

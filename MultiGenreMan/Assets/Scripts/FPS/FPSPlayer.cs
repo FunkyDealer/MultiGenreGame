@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class FPSPlayer : FPS_Creature
 {
+    private bool _canControl = true;
 
     [SerializeField, Min(0.01f)]
     private float _movSmoothLerp = 0.03f;
@@ -18,7 +19,7 @@ public class FPSPlayer : FPS_Creature
 
     private Rigidbody _myRigidBody;
     private CapsuleCollider _myCollider;
-
+    private BoxCollider _myBoxCollider;
 
     //camera stuff
     [SerializeField, Min(0.1f)]
@@ -92,12 +93,18 @@ public class FPSPlayer : FPS_Creature
 
     private float _lastGroundPos;
     private float _highestPositon;
-    private bool falling = false;    
+    private bool falling = false;
+
+    [SerializeField]
+    private GameObject _playerDeathObject;
+    [SerializeField]
+    private GameObject _DeathHUD;
 
     private void Awake()
     {
         _myRigidBody = GetComponent<Rigidbody>();
         _myCollider = GetComponent<CapsuleCollider>();
+        _myBoxCollider = GetComponent<BoxCollider>();
         _heldWeapons = new List<FPS_Weapon>();
 
         _slots = new List<FPS_Weapon>[9];
@@ -127,19 +134,17 @@ public class FPSPlayer : FPS_Creature
         _highestPositon = 0;
     }
 
-
-
-
-
     // Update is called once per frame
     void Update()
     {
+        if (_alive && _canControl)
+        {
+            PlayerInput();
 
-        PlayerInput();
 
-
-        //CameraAndBodyRotation();
-        MouseLook();
+            //CameraAndBodyRotation();
+            MouseLook();
+        }
 
 
         Shoot();
@@ -330,7 +335,7 @@ public class FPSPlayer : FPS_Creature
                 //Nothing yet
             }
         }
-    }   
+    }
 
     //Player's Movement Input
     private void BodyMovement()
@@ -356,23 +361,21 @@ public class FPSPlayer : FPS_Creature
         }
 
         //turn the camera's forward into a flat vector
-        Vector3 cameraForward = _cameraTransform.forward; 
+        Vector3 cameraForward = _cameraTransform.forward;
         cameraForward.y = 0;
 
         //conserve y speed so that fall speed is always the same
-        Vector3 previousVelocity = _myRigidBody.velocity; 
+        Vector3 previousVelocity = _myRigidBody.velocity;
 
         //create movement vectors
         Vector3 horizontalDir = _cameraTransform.right * _movementInput.x;
-        Vector3 verticalDir =  cameraForward * _movementInput.y;
+        Vector3 verticalDir = cameraForward * _movementInput.y;
 
-        _direction = (horizontalDir + verticalDir) * _movSpeed;    
-       
-
+        _direction = (horizontalDir + verticalDir) * _movSpeed;
 
         _direction = new Vector3(_direction.x, previousVelocity.y, _direction.z);
 
-        _myRigidBody.velocity = _direction;
+         _myRigidBody.velocity = _direction;
 
     }
 
@@ -386,6 +389,9 @@ public class FPSPlayer : FPS_Creature
 
             _myCollider.height = 1.2f;
             _myCollider.center = new Vector3(0, -0.4f, 0);
+
+            _myBoxCollider.size = new Vector3(1, 1.2f, 1);
+            _myBoxCollider.center = new Vector3(0, -0.4f, 0);
         }
         else
         {
@@ -395,6 +401,9 @@ public class FPSPlayer : FPS_Creature
 
             _myCollider.height = 2f;
             _myCollider.center = Vector3.zero;
+
+            _myBoxCollider.size = new Vector3(1, 1, 1);
+            _myBoxCollider.center = Vector3.zero;
         }
     }
 
@@ -563,7 +572,11 @@ public class FPSPlayer : FPS_Creature
 
         _currentHealth -= damage;
 
-        if (_currentHealth < 0) _currentHealth = 0;
+        if (_currentHealth < 0)
+        {
+            _currentHealth = 0;
+            Die();
+        }  
 
         FPS_UIController.inst.UpdateHealth(_currentHealth);
 
@@ -576,11 +589,43 @@ public class FPSPlayer : FPS_Creature
 
         _currentHealth -= damage;
 
-        if (_currentHealth < 0) _currentHealth = 0;
+        if (_currentHealth < 0)
+        {
+            _currentHealth = 0;
+            Die();
+        }
 
         FPS_UIController.inst.UpdateHealth(_currentHealth);
 
         Debug.Log("received a hit");
+    }
+
+    public override void ReceiveDamageFromHazard(int damage, float delay)
+    {
+        base.ReceiveDamageFromHazard(damage, delay);
+
+        _currentHealth -= damage;
+
+        if (_currentHealth < 0)
+        {
+            _currentHealth = 0;
+            Die();
+        }
+
+        FPS_UIController.inst.UpdateHealth(_currentHealth);
+
+        StartCoroutine(ReloadHazardDamage(delay));
+    }
+
+    protected override void Die()
+    {
+        base.Die();
+        _alive = false;
+        _canControl = false;
+
+        Cursor.lockState = CursorLockMode.None;
+
+        SpawnDeathHead();
     }
 
     public Tuple<int, int> GetHealthStatus() => new Tuple<int, int>(_maxHealth, _currentHealth);
@@ -594,7 +639,6 @@ public class FPSPlayer : FPS_Creature
 
             FPS_UIController.inst.UpdateHealth(_currentHealth);
         }
-
     }
 
     public void ReceiveBullets(int quantity)
@@ -752,6 +796,16 @@ public class FPSPlayer : FPS_Creature
         ResetFalling();
     }
 
+    private void SpawnDeathHead()
+    {
+        GameObject g = Instantiate(_playerDeathObject, _cameraTransform.transform.position, Quaternion.identity);
+        FPS_UIController.inst.DeactivateHUD();
 
+        GameObject h = Instantiate(_DeathHUD);
+        h.SetActive(true);
+
+        this.gameObject.SetActive(false);
+        
+    }
 
 }

@@ -30,14 +30,39 @@ public class FPS_Enemy : FPS_Creature
         {
             _currentHealth = 0;
 
-            FloatingTexTManager.inst.CreateText(transform.position, $"Killed", 0.5f);
-
-            Destroy(gameObject);
+            Die();
         }
         
 
 
     }
-    
+
+    public override void ReceiveDamageFromHazard(int damage, float delay)
+    {
+        base.ReceiveDamageFromHazard(damage, delay);
+
+        _currentHealth -= damage;
+        FloatingTexTManager.inst.CreateText(transform.position, $"-{damage}", 0);
+
+        if (_currentHealth < 0)
+        {
+            _currentHealth = 0;
+
+            
+            Die();
+        }
+
+        StartCoroutine(ReloadHazardDamage(delay));
+    }
+
+    protected override void Die()
+    {
+        base.Die();
+
+        _alive = false;
+        FloatingTexTManager.inst.CreateText(transform.position, $"Killed", 0.5f);
+        Destroy(gameObject);
+    }
+
 
 }

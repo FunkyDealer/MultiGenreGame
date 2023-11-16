@@ -303,6 +303,7 @@ GameObject:
   - component: {fileID: 8678459237252674029}
   - component: {fileID: 8678459237252674034}
   - component: {fileID: 8678459237252674031}
+  - component: {fileID: 4508399840684434566}
   - component: {fileID: 8678459237252674028}
   m_Layer: 0
   m_Name: Player
@@ -358,8 +359,24 @@ MonoBehaviour:
   _weaponPos: {fileID: 1775179416297796409}
   _laserProjectilePrefab: {fileID: 8183474111835587106, guid: f888b17463faee143aa08255ac97b4d9, type: 3}
   _crouchSpeed: 10
+  _playerDeathObject: {fileID: 3941103181134694381, guid: d6e8fb0ba8962f24390298f85a8999b7, type: 3}
+  _DeathHUD: {fileID: 5718959342622153285, guid: 478363324b59bab4284b55826bf652d8, type: 3}
 --- !u!136 &8678459237252674031
 CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8678459237252674035}
+  m_Material: {fileID: 13400000, guid: 6919412da69e54d499836b41893f4c0c, type: 2}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &4508399840684434566
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -368,9 +385,8 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 2, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &8678459237252674028
 Rigidbody:
@@ -387,7 +403,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!1 &8678459237532675598
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,7 +415,6 @@ GameObject:
   - component: {fileID: 8678459237532675593}
   - component: {fileID: 8678459237532675594}
   - component: {fileID: 8678459237532675595}
-  - component: {fileID: 8678459237532675592}
   m_Layer: 0
   m_Name: eyes
   m_TagString: Untagged
@@ -472,16 +487,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &8678459237532675592
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8678459237532675598}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
