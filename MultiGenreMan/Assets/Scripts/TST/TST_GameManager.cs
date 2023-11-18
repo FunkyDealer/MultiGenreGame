@@ -53,6 +53,8 @@ public class TST_GameManager : MonoBehaviour
     {
         yield return new WaitForFixedUpdate();
 
+        CurrentPlayer = 0;
+
         Debug.Log($"starting units, count: {_units.Count}");
         foreach (var u in _units)
         {
@@ -114,9 +116,11 @@ public class TST_GameManager : MonoBehaviour
     public static void KillUnit(TST_Unit u)
     {
         _units.Remove(u);
-        _players[u.Team].RemoveUnit(u);
+        _players[u.Team].RemoveUnit(u);        
 
         Destroy(u.gameObject);
+
+       if (_players[u.Team].CheckForDefeat()) _players[u.Team].Defeat();
 
     }
 
@@ -150,5 +154,41 @@ public class TST_GameManager : MonoBehaviour
 
         return enemyList;
     }
+
+    public static void CheckForPlayerVictory()
+    {
+        bool playerVictory = true;
+
+        foreach (var p in _players.Values)
+        {
+            if (p.Team == 1) continue;
+
+            if (!p.Defeated) playerVictory = false;
+        }
+
+        if (playerVictory)
+        {
+            (_players[1] as TST_Player).Victory();
+        }
+
+    }
+
+    public static void StopTheGame()
+    {
+        foreach (var p in _players.Values)
+        {
+            p.StopPlaying();
+        }
+    }
+
+    public static void EndGame()
+    {
+        StopTheGame();
+
+        _players.Clear();
+        _units.Clear();
+    }
+
+   
 
 }

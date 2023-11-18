@@ -16,6 +16,11 @@ public class TST_Player : TST_Controller
 
     TST_Space _currentlySelectedSpace = null;
 
+    [SerializeField]
+    GameObject _victoryScreen;
+    [SerializeField]
+    GameObject _defeatScreen;
+
     protected override void Awake()
     {
         Team = 1;
@@ -44,8 +49,6 @@ public class TST_Player : TST_Controller
     void Update()
     {
         _movementInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-
-
 
         if (MyTurn && Input.GetButtonDown("Submit")) {
             StartCoroutine(EndMyTurn(0.1f));
@@ -99,8 +102,6 @@ public class TST_Player : TST_Controller
 
         return false;
     }
-
-
 
     public void SelectSpace(GameObject g)
     {
@@ -185,6 +186,35 @@ public class TST_Player : TST_Controller
     } 
 
 
+    public override void Defeat()
+    {
+        base.Defeat();
+
+        TST_GameManager.EndGame();
+        TST_UIController.inst.DisableUI();
+        //defeat hud
+
+        GameObject h = Instantiate(_defeatScreen);
+        h.SetActive(true);
+    }
+
+    public void Victory()
+    {
+        EndGame();
+
+        TST_GameManager.EndGame();
+        TST_UIController.inst.DisableUI();
+
+        GameObject h = Instantiate(_victoryScreen);
+        h.SetActive(true);
+    }
+
+    public override void StopPlaying()
+    {
+        base.StopPlaying();
+
+        _camera.StopPlay();
+    }
 
 
 }

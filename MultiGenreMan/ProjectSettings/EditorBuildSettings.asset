@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/RTSLevels/RTSLevel.unity
     guid: 3baa92fb46b79b543ae675302caf78c9
+  - enabled: 1
+    path: Assets/Scenes/TSTLevels/TSTTestLevel.unity
+    guid: d1193dbef8158d0449e5ca45b86d377a
   m_configObjects: {}

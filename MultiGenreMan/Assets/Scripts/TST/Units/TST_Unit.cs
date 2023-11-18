@@ -29,7 +29,6 @@ public class TST_Unit : MonoBehaviour
     [SerializeField]
     public int Team { get; private set; } = 1;
 
-
     [SerializeField]
     protected int _startingWidth = 1;
     [SerializeField]

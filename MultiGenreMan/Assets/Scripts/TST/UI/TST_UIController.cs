@@ -23,6 +23,11 @@ public class TST_UIController : MonoBehaviour
     [SerializeField]
     private TMP_Text _turnIndicatorText;
 
+    [SerializeField]
+    private GameObject _turnInfo;
+    [SerializeField]
+    private TMP_Text _turnInfoText;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -37,6 +42,8 @@ public class TST_UIController : MonoBehaviour
 
         _unitTextBox.SetActive(false);
         _turnIndicatorBox.SetActive(false);
+
+        _turnInfo.SetActive(false);
     }
 
     // Start is called before the first frame update
@@ -71,9 +78,36 @@ public class TST_UIController : MonoBehaviour
 
     public void SetTurnIndicator(int player)
     {
+        IndicateTurnChange(player);
+
         _turnIndicatorBox.SetActive(true);
         if (player == 1) _turnIndicatorText.text = new string($"Player {player} (You)");
         else _turnIndicatorText.text = new string($"Player {player} (Enemy)");
     }
 
+    private void IndicateTurnChange(int player)
+    {
+        _turnInfo.SetActive(true);
+        if (player == 1) _turnInfoText.text = new string($"Your Turn");
+        else _turnInfoText.text = new string($"Enemy Turn");
+
+
+        StartCoroutine(DisableTurnChangeIndicator());
+    }
+
+
+    private IEnumerator DisableTurnChangeIndicator()
+    {
+        yield return new WaitForSeconds(1.3f);
+
+
+        _turnInfo.SetActive(false);
+
+    }
+
+    public void DisableUI()
+    {
+        StopAllCoroutines();
+        this.gameObject.SetActive(false);
+    }
 }

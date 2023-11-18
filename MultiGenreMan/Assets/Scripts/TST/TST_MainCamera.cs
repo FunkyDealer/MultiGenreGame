@@ -32,6 +32,7 @@ public class TST_MainCamera : MonoBehaviour
     private Vector3 _mousePos;
     private float _distMouse;
 
+    private bool _canOrder = true;
 
     private void Awake()
     {
@@ -69,7 +70,7 @@ public class TST_MainCamera : MonoBehaviour
         ZoomCamera();
 
         
-        if (_player.MyTurn) ClickEnvironment();
+        if (_player.MyTurn && _canOrder) ClickEnvironment();
 
         MouseMapNavigation();
     }
@@ -225,6 +226,11 @@ public class TST_MainCamera : MonoBehaviour
                 transform.position = _playerObject.position + _offset;
             }
         }
+    }
+
+    public void StopPlay()
+    {
+        _canOrder = false;
     }
 
 }

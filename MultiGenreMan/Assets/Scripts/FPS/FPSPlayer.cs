@@ -19,7 +19,6 @@ public class FPSPlayer : FPS_Creature
 
     private Rigidbody _myRigidBody;
     private CapsuleCollider _myCollider;
-    private BoxCollider _myBoxCollider;
 
     //camera stuff
     [SerializeField, Min(0.1f)]
@@ -104,7 +103,6 @@ public class FPSPlayer : FPS_Creature
     {
         _myRigidBody = GetComponent<Rigidbody>();
         _myCollider = GetComponent<CapsuleCollider>();
-        _myBoxCollider = GetComponent<BoxCollider>();
         _heldWeapons = new List<FPS_Weapon>();
 
         _slots = new List<FPS_Weapon>[9];
@@ -216,6 +214,7 @@ public class FPSPlayer : FPS_Creature
         _mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
 
         _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
+
 
         if (Input.GetButton("Interact"))
         {
@@ -340,7 +339,7 @@ public class FPSPlayer : FPS_Creature
     //Player's Movement Input
     private void BodyMovement()
     {
-        _movementInput = Vector2.ClampMagnitude(_movementInput, 1);
+        _movementInput = Vector2.ClampMagnitude(_movementInput, 1);      
 
         //if (!_isGrounded) _movementInput = Vector2.zero;
 
@@ -371,12 +370,33 @@ public class FPSPlayer : FPS_Creature
         Vector3 horizontalDir = _cameraTransform.right * _movementInput.x;
         Vector3 verticalDir = cameraForward * _movementInput.y;
 
-        _direction = (horizontalDir + verticalDir) * _movSpeed;
+        _direction = (horizontalDir + verticalDir);      
+        _direction = AdjustDirectionToGround(_direction);
+        _direction *= _movSpeed;
 
-        _direction = new Vector3(_direction.x, previousVelocity.y, _direction.z);
+        _direction.y += previousVelocity.y;        
+        //_direction = new Vector3(_direction.x, previousVelocity.y, _direction.z);
 
-         _myRigidBody.velocity = _direction;
+        _myRigidBody.velocity = _direction;
 
+    }
+
+    private Vector3 groundNormal = Vector3.zero;
+
+    private Vector3 AdjustDirectionToGround(Vector3 direction)
+    {
+        if (_isGrounded)
+        {
+            Quaternion slopeRotation = Quaternion.FromToRotation(Vector3.up, groundNormal);
+            Vector3 adjustedVelocity = slopeRotation * direction;
+
+            if (adjustedVelocity.y < 0)
+            {
+                return adjustedVelocity;
+            }
+        }
+
+        return direction;
     }
 
     private void Crouch()
@@ -390,8 +410,7 @@ public class FPSPlayer : FPS_Creature
             _myCollider.height = 1.2f;
             _myCollider.center = new Vector3(0, -0.4f, 0);
 
-            _myBoxCollider.size = new Vector3(1, 1.2f, 1);
-            _myBoxCollider.center = new Vector3(0, -0.4f, 0);
+
         }
         else
         {
@@ -402,8 +421,6 @@ public class FPSPlayer : FPS_Creature
             _myCollider.height = 2f;
             _myCollider.center = Vector3.zero;
 
-            _myBoxCollider.size = new Vector3(1, 1, 1);
-            _myBoxCollider.center = Vector3.zero;
         }
     }
 
@@ -447,6 +464,21 @@ public class FPSPlayer : FPS_Creature
         _cameraTransform.localRotation = Quaternion.Euler(Vector3.right * _pitch);
 
         transform.rotation *= Quaternion.Euler(_mouseInput.x * _sensitivity * Time.deltaTime * Vector3.up);
+
+        Vector3 eulerRotation = _cameraTransform.localRotation.eulerAngles;
+        if (_movementInput.x > 0)
+        {
+            eulerRotation.z = Mathf.Lerp(eulerRotation.z, -0.5f, Mathf.Abs(_movementInput.x));            
+        }
+        if (_movementInput.x < 0)
+        {
+            eulerRotation.z = Mathf.Lerp(eulerRotation.z, 0.5f, Mathf.Abs(_movementInput.x));
+        }
+        if (_movementInput.x == 0)
+        {
+            eulerRotation.z = 0;
+        }
+        _cameraTransform.localRotation = Quaternion.Euler(eulerRotation.x, eulerRotation.y, eulerRotation.z);
     }
 
     private void CheckForIsGrounded()
@@ -456,13 +488,15 @@ public class FPSPlayer : FPS_Creature
             {
                 _isGrounded = true;
              Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.green);
+
+                groundNormal = hit.normal;
+
                 if (falling) FallDamage();
                 ResetFalling();
              }
             else 
             {
                 _isGrounded = false;
-
                 Debug.DrawLine(_feet.position, _feet.position - Vector3.up * .3f, Color.red);
             }
     }
@@ -572,7 +606,7 @@ public class FPSPlayer : FPS_Creature
 
         _currentHealth -= damage;
 
-        if (_currentHealth < 0)
+        if (_currentHealth <= 0)
         {
             _currentHealth = 0;
             Die();
@@ -589,7 +623,7 @@ public class FPSPlayer : FPS_Creature
 
         _currentHealth -= damage;
 
-        if (_currentHealth < 0)
+        if (_currentHealth <= 0)
         {
             _currentHealth = 0;
             Die();
@@ -606,7 +640,7 @@ public class FPSPlayer : FPS_Creature
 
         _currentHealth -= damage;
 
-        if (_currentHealth < 0)
+        if (_currentHealth <= 0)
         {
             _currentHealth = 0;
             Die();
@@ -622,6 +656,7 @@ public class FPSPlayer : FPS_Creature
         base.Die();
         _alive = false;
         _canControl = false;
+        StopAllCoroutines();
 
         Cursor.lockState = CursorLockMode.None;
 

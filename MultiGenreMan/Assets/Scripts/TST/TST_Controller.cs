@@ -10,6 +10,8 @@ public class TST_Controller : MonoBehaviour
 
     protected List<TST_Unit> _unitList;
 
+    public bool Defeated { get; protected set; } = false;
+
     protected virtual void Awake()
     {
         _unitList = new List<TST_Unit>();
@@ -57,5 +59,29 @@ public class TST_Controller : MonoBehaviour
     public void RemoveUnit(TST_Unit u)
     {
         _unitList.Remove(u);
+    }
+
+    public virtual void StopPlaying()
+    {
+
+    }
+
+    public virtual bool CheckForDefeat()
+    {
+        if (_unitList.Count <= 0) return true;
+
+        return false;
+    }
+
+    public virtual void Defeat()
+    {
+        Defeated = true;
+        EndGame();
+
+    }
+
+    public virtual void EndGame()
+    {
+        _unitList.Clear();
     }
 }

@@ -68,7 +68,6 @@ public class TST_AiPlayer : TST_Controller
        StartCoroutine(AttackOrder());
 
        StartCoroutine(MoveOrder());
-
         
     }
 
@@ -145,6 +144,8 @@ public class TST_AiPlayer : TST_Controller
     {
         //search closest enemy
         TST_Unit closest = GetClosestEnemyTo(unit);
+
+        if (closest == null) return false; //there are no enemies
 
         //check if closest isn't right next to our unit
         float dist = Vector2Int.Distance(unit.CurrentSpace2D, closest.CurrentSpace2D);
@@ -234,6 +235,8 @@ public class TST_AiPlayer : TST_Controller
     {
         List<TST_Unit> enemies = TST_GameManager.GetListOfEnemies(MyUnit.Team);
 
+        if (enemies.Count == 0) return null;
+
         TST_Unit closest = enemies[0];
         
         float closestDist = Vector2Int.Distance(MyUnit.CurrentSpace2D, closest.CurrentSpace2D);
@@ -262,6 +265,8 @@ public class TST_AiPlayer : TST_Controller
             List<TST_Unit> possibleAttacks = new List<TST_Unit>(); //list of possible attacks
             List<TST_Unit> enemyList = TST_GameManager.GetListOfEnemies(Team); //list of enemies
 
+            if (enemyList.Count == 0) return false; //there are no enemies
+
             foreach (var u in enemyList)
             {
                 if (myUnit.ValidateAttackFast(u)) //validate attack
@@ -289,6 +294,8 @@ public class TST_AiPlayer : TST_Controller
     private Tuple<TST_Unit, TST_Unit> CheckForPossibleAttacks()
     {
         List<TST_Unit> enemyList = TST_GameManager.GetListOfEnemies(Team);
+
+        if (enemyList.Count == 0) return null;
 
         foreach (var u in _unitList) //go through each of my units
         {
@@ -392,8 +399,17 @@ public class TST_AiPlayer : TST_Controller
         //isntead of doing this it should just get a list of enemies and check if any of them are in range
     }
 
-    
+    public override void Defeat()
+    {
+        base.Defeat();
 
+        TST_GameManager.CheckForPlayerVictory();
+    }
+
+    public override void StopPlaying()
+    {
+        StopAllCoroutines();
+    }
     
 
 
