@@ -107,7 +107,11 @@ public class TST_UIController : MonoBehaviour
 
     public void DisableUI()
     {
-        StopAllCoroutines();
         this.gameObject.SetActive(false);
+    }
+
+    public void EnableUI()
+    {
+        this.gameObject.SetActive(true);
     }
 }

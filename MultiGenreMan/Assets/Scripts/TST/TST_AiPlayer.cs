@@ -410,7 +410,26 @@ public class TST_AiPlayer : TST_Controller
     {
         StopAllCoroutines();
     }
-    
 
+    public override void Pause(bool on)
+    {
+        base.Pause(on);
+
+        switch (on)
+        {
+            case true:
+
+                
+
+
+                break;
+            case false:
+
+
+
+                break;
+
+        }
+    }
 
 }

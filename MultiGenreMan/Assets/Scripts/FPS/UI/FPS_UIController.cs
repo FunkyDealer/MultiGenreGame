@@ -48,7 +48,7 @@ public class FPS_UIController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void StartAmmoCounter(int ammo)
@@ -94,5 +94,10 @@ public class FPS_UIController : MonoBehaviour
     public void DeactivateHUD()
     {
         this.gameObject.SetActive(false);
+    }
+
+    public void ActivateHUD()
+    {
+        this.gameObject.SetActive(true);
     }
 }

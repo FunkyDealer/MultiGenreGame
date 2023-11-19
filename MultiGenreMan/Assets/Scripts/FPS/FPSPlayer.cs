@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class FPSPlayer : FPS_Creature
 {
-    private bool _canControl = true;
+    private bool _inControl = true;
 
     [SerializeField, Min(0.01f)]
     private float _movSmoothLerp = 0.03f;
@@ -99,6 +99,11 @@ public class FPSPlayer : FPS_Creature
     [SerializeField]
     private GameObject _DeathHUD;
 
+    bool _paused = false;
+    bool _canPause = true;
+    [SerializeField]
+    private GameObject _pauseMenu;
+
     private void Awake()
     {
         _myRigidBody = GetComponent<Rigidbody>();
@@ -112,7 +117,9 @@ public class FPSPlayer : FPS_Creature
             _slots[i] = new List<FPS_Weapon>();
         }
 
-
+        GameObject p = Instantiate(_pauseMenu);
+        FPS_UIPauseController ui = p.GetComponent<FPS_UIPauseController>();
+        ui.Player = this;
     }
 
     // Start is called before the first frame update
@@ -135,7 +142,7 @@ public class FPSPlayer : FPS_Creature
     // Update is called once per frame
     void Update()
     {
-        if (_alive && _canControl)
+        if (_alive && _inControl)
         {
             PlayerInput();
 
@@ -210,11 +217,16 @@ public class FPSPlayer : FPS_Creature
     //handles all inputs
     private void PlayerInput()
     {
+        if (_canPause && Input.GetButtonDown("Escape"))
+        {
+            PauseGame();
+            return;
+        }
+
         //Use GetAxisRaw to get a more responsive input
         _mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
 
-        _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
-
+        _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;      
 
         if (Input.GetButton("Interact"))
         {
@@ -655,7 +667,7 @@ public class FPSPlayer : FPS_Creature
     {
         base.Die();
         _alive = false;
-        _canControl = false;
+        _inControl = false;
         StopAllCoroutines();
 
         Cursor.lockState = CursorLockMode.None;
@@ -841,6 +853,39 @@ public class FPSPlayer : FPS_Creature
 
         this.gameObject.SetActive(false);
         
+    }
+
+    public void PauseGame()
+    {
+        _paused = !_paused;
+
+        switch (_paused)
+        {
+            case true:
+                _canPause = false;
+                _inControl = false;
+                Time.timeScale = 0;
+                Cursor.lockState = CursorLockMode.None;
+                FPS_UIController.inst.DeactivateHUD();
+                FPS_UIPauseController.inst.EnableMenu();
+                break;
+            case false:
+                _inControl = true;
+                Time.timeScale = 1;
+                Cursor.lockState = CursorLockMode.Locked;
+                FPS_UIController.inst.ActivateHUD();
+                StartCoroutine(PauseUnlock());
+                break;
+        }
+
+
+    }
+
+    private IEnumerator PauseUnlock()
+    {
+        yield return 0;
+
+        _canPause = true;
     }
 
 }

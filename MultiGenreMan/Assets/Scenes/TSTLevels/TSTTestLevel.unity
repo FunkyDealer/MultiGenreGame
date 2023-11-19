@@ -997,7 +997,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 75, y: -12.4}
+  m_AnchoredPosition: {x: 75, y: -12.400024}
   m_SizeDelta: {x: 385, y: 35}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &547984886
@@ -1483,6 +1483,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _movementIndicatorObj: {fileID: 695387197}
+  _pauseMenuPrefab: {fileID: 6103632540733163917, guid: ef14afd49469a194ea2d3cc8b2c6f3e2, type: 3}
 --- !u!4 &665436835
 Transform:
   m_ObjectHideFlags: 0
@@ -3907,7 +3908,7 @@ MonoBehaviour:
   m_HorizontalAxis: Horizontal
   m_VerticalAxis: Vertical
   m_SubmitButton: Submit
-  m_CancelButton: Cancel
+  m_CancelButton: Escape
   m_InputActionsPerSecond: 10
   m_RepeatDelay: 0.5
   m_ForceModuleActive: 0

@@ -11,7 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/FPSLevels/FPSTestLevel.unity
     guid: b04d59b15fae08745afa52cf5da2b30c
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/ARPG Levels/ARPG_TestLevel.unity
     guid: c297e7369646107449fe572806e9330b
   - enabled: 0

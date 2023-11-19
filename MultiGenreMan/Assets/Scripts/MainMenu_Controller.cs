@@ -27,4 +27,9 @@ public class MainMenu_Controller : MonoBehaviour
     {
         SceneManager.LoadScene("ARPG_TestLevel");
     }
+
+    public void GoToTacticsGame()
+    {
+        SceneManager.LoadScene("TSTTestLevel");
+    }
 }

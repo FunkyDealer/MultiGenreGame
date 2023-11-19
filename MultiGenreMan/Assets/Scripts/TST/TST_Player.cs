@@ -21,6 +21,8 @@ public class TST_Player : TST_Controller
     [SerializeField]
     GameObject _defeatScreen;
 
+    private bool _canPlay = true;
+
     protected override void Awake()
     {
         Team = 1;
@@ -48,10 +50,21 @@ public class TST_Player : TST_Controller
     // Update is called once per frame
     void Update()
     {
-        _movementInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        if (_canPlay)
+        {
+             _movementInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+            if (MyTurn)
+            {
+                if (Input.GetButtonDown("Submit"))
+                {
+                    StartCoroutine(EndMyTurn(0.1f));
+                }
+                if (Input.GetButtonDown("Escape"))
+                {
+                    TST_GameManager.PauseGame();
+                }
+            }
 
-        if (MyTurn && Input.GetButtonDown("Submit")) {
-            StartCoroutine(EndMyTurn(0.1f));
         }
 
     }
@@ -214,7 +227,30 @@ public class TST_Player : TST_Controller
         base.StopPlaying();
 
         _camera.StopPlay();
+        _canPlay = false;
     }
 
+    public override void Pause(bool on)
+    {
+        base.Pause(on);
+
+        switch (on)
+        {
+            case true:
+                _camera.StopPlay();
+                TST_UIController.inst.DisableUI();
+                TST_UIPauseController.inst.EnableMenu();
+                _canPlay = false;
+
+                break;
+                case false:
+                _camera.ResumePlay();
+                TST_UIController.inst.EnableUI();
+                _canPlay = true;
+
+                break;
+
+        }
+    }
 
 }

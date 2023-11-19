@@ -66,6 +66,11 @@ public class TST_Controller : MonoBehaviour
 
     }
 
+    public virtual void Pause(bool on)
+    {
+
+    }
+
     public virtual bool CheckForDefeat()
     {
         if (_unitList.Count <= 0) return true;

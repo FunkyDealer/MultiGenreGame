@@ -21,6 +21,10 @@ public class TST_GameManager : MonoBehaviour
     private GameObject _movementIndicatorObj;
     public GameObject GetMovementIndicatorObj => _movementIndicatorObj;
 
+
+    [SerializeField]
+    private GameObject _pauseMenuPrefab;
+
     private void Awake()
     {       
 
@@ -33,7 +37,7 @@ public class TST_GameManager : MonoBehaviour
             _instance = this;
         }
 
-
+        Instantiate(_pauseMenuPrefab);
     }
 
     // Start is called before the first frame update
@@ -189,6 +193,24 @@ public class TST_GameManager : MonoBehaviour
         _units.Clear();
     }
 
-   
+    public static void PauseGame()
+    {
+        Time.timeScale = 0;
+
+        foreach (var p in _players.Values)
+        {
+            p.Pause(true);
+        }
+    }
+
+    public static void UnpauseGame()
+    {
+        Time.timeScale = 1;
+
+        foreach (var p in _players.Values)
+        {
+            p.Pause(false);
+        }
+    }
 
 }
