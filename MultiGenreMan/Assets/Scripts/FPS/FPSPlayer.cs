@@ -14,6 +14,7 @@ public class FPSPlayer : FPS_Creature
     [SerializeField]
     Transform _feet;
     private bool _isGrounded;
+    private bool _crouch = false;
     [SerializeField]
     int _jumpPower = 7;
 
@@ -60,7 +61,7 @@ public class FPSPlayer : FPS_Creature
 
     private bool _interact = false;
     private bool _canInteract = true;
-    private bool _crouch = false;
+    private bool _crouchOrder = false;
     private bool _jump = false;
     private bool _firePrimary = false;
     private bool _fireSecondary = false;
@@ -262,12 +263,12 @@ public class FPSPlayer : FPS_Creature
             }
         }
 
-        if (!_isGrounded && Input.GetButtonDown("Crouch")) TryToGrabWall();
+        if (!_isGrounded && Input.GetButtonDown("Crounch")) TryToGrabWall();
 
-        if (Input.GetButton("Crouch")) _crouch = true;
-        else _crouch = false;
+        if (Input.GetButton("Crounch")) _crouchOrder = true;
+        else _crouchOrder = false;
 
-        if (_grabingWall && Input.GetButtonUp("Crouch")) ReleaseWall();
+        if (_grabingWall && Input.GetButtonUp("Crounch")) ReleaseWall();
     }
 
     private void SelectSlot(int slot)
@@ -413,7 +414,7 @@ public class FPSPlayer : FPS_Creature
 
     private void Crouch()
     {
-        if (_crouch)
+        if (_crouchOrder)
         {
             _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, _crouchPos.position, _crouchSpeed * Time.deltaTime);
 
@@ -422,16 +423,37 @@ public class FPSPlayer : FPS_Creature
             _myCollider.height = 1.2f;
             _myCollider.center = new Vector3(0, -0.4f, 0);
 
-
+            _crouch = true;
         }
-        else
+        else 
         {
-            _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, _standUpPos.position, _crouchSpeed * Time.deltaTime);
+            //check if player can uncrouch
+            if (_crouch)
+            {
+                RaycastHit hit;
+                if (Physics.Raycast(_cameraTransform.position, Vector3.up, out hit, 0.3f)) //raycast up
+                {
+                    //something is blocking
+                    Debug.DrawLine(_cameraTransform.position, _cameraTransform.position + Vector3.up * .3f, Color.green);
 
-            _eyesTransform.position = Vector3.Lerp(_eyesTransform.position, new Vector3(_eyesTransform.position.x, _standUpPos.position.y, _eyesTransform.position.z), _crouchSpeed * Time.deltaTime);
+                    _crouch = true;
+                }
+                else
+                {
+                    _crouch = false;
+                }
 
-            _myCollider.height = 2f;
-            _myCollider.center = Vector3.zero;
+
+            }
+            else {
+                
+                _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, _standUpPos.position, _crouchSpeed * Time.deltaTime);
+
+                _eyesTransform.position = Vector3.Lerp(_eyesTransform.position, new Vector3(_eyesTransform.position.x, _standUpPos.position.y, _eyesTransform.position.z), _crouchSpeed * Time.deltaTime);
+
+                _myCollider.height = 2f;
+                _myCollider.center = Vector3.zero;
+            }
 
         }
     }
@@ -477,6 +499,8 @@ public class FPSPlayer : FPS_Creature
 
         transform.rotation *= Quaternion.Euler(_mouseInput.x * _sensitivity * Time.deltaTime * Vector3.up);
 
+
+        //half life camera tilt effect
         Vector3 eulerRotation = _cameraTransform.localRotation.eulerAngles;
         if (_movementInput.x > 0)
         {
