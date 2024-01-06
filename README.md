@@ -28,4 +28,8 @@ when the game starts, a unit on the player's team will spawn on the bottom right
 you can move the unit by right clicking on one of the squares that light up.
 Press enter to end turns
 
+GTS (Ghost in the shell)
+this is a prototype for a game based on the "ghost in the shell" game from 1997 for the playstation
+The main feature is that the player turns into corners when walking into them, meaning that you can walk on walls, ceilings or any surface.
+
 (the files for the TBT game are named "TST" by mistake)
