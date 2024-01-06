@@ -44,6 +44,7 @@ public class FloatingTexTManager : MonoBehaviour
 
     public void CreateText(Vector3 position, string text, float delay)
     {
+        if (!AppManager.inst.Debug) return;
 
         StartCoroutine(MakeText(position, text, delay));
 
@@ -53,7 +54,12 @@ public class FloatingTexTManager : MonoBehaviour
 
     private IEnumerator MakeText(Vector3 position, string text, float delay)
     {
+        if (!AppManager.inst.Debug) yield break;
+        if (Camera.main == null) yield break;
+
         yield return new WaitForSeconds(delay);
+
+        
 
         Vector3 pos = Camera.main.WorldToScreenPoint(position);
 

@@ -45,6 +45,7 @@ public class GTS_DebugUi : MonoBehaviour
 
     public void DebugLine(string key, string text)
     {
+        if (!AppManager.inst.Debug) return;
         if (!_debugLines.ContainsKey(key)) //create key
         { 
             TMP_Text newT = CreateLine(text);

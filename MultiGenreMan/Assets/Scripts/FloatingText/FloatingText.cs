@@ -44,6 +44,8 @@ public class FloatingText : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (Camera.main == null) return;
+
         if (_ObjPosition != null) transform.position = Camera.main.WorldToScreenPoint(_ObjPosition);
 
         _offset += Vector3.up * Time.deltaTime * _speed;
@@ -57,11 +59,13 @@ public class FloatingText : MonoBehaviour
 
     public void SetText(FloatingTexTManager m, string t, Vector3 pos, float scale)
     {
-        _ObjPosition = pos;
-        _myManager = m;
-        _text.text = t;
+        if (!AppManager.inst.Debug) return;
 
-        _myRect.localScale = new Vector3(scale, scale, 1);
+            _ObjPosition = pos;
+            _myManager = m;
+            _text.text = t;
+
+            _myRect.localScale = new Vector3(scale, scale, 1);
     }
 
     private IEnumerator Kill()

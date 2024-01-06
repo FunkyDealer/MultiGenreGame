@@ -12,6 +12,7 @@ public class GTS_Player : GTS_Entity
     private bool _upright = true;
     private bool _foundfloor = false;
 
+    float _distanceToground = 0;
     private enum GroundStatus
     {
         isGrounded, //there is ground Right Bellow
@@ -33,7 +34,8 @@ public class GTS_Player : GTS_Entity
     private Vector3 _flatDirection;
     private Vector3 _fallDir; //direct to where to fall
 
-    private float _rotationSpeed = 2;
+    [SerializeField]
+    private float _rotationSpeed = 4;
 
     [SerializeField]
     private float _horizontalRotationSpeed = 30;
@@ -67,7 +69,6 @@ public class GTS_Player : GTS_Entity
 
     [SerializeField]
     private Transform _lookAtTarget;
-    public Transform LookAtTarget { get { return _lookAtTarget; } }
 
     [SerializeField, Range(0, 20)]
     private float _xOffset = 5;
@@ -79,8 +80,21 @@ public class GTS_Player : GTS_Entity
     public Vector3 OffSet { get { return _offSet; } }
 
     [SerializeField]
-    private Transform front;
+    private Transform _front;
     private float _colliderSize;
+
+    private bool _canRotateUp = true;
+    private bool _canRotateDown = true;
+    [SerializeField]
+    private float _rotateDirChangeDelay = 0.3f;
+
+    [SerializeField]
+    GameObject _topCamera;
+    [SerializeField]
+    GameObject _rightCamera;
+    [SerializeField]
+    GameObject _leftCamera;
+
 
     protected void Awake()
     {
@@ -89,7 +103,7 @@ public class GTS_Player : GTS_Entity
 
         _offSet = new Vector3(_xOffset, _yOffset, -_zOffset);
 
-        _colliderSize = Vector3.Distance(transform.position, front.position);
+        _colliderSize = Vector3.Distance(transform.position, _front.position);
         _flatDirection = Vector3.zero;
         _direction = Vector3.zero;
 
@@ -106,12 +120,20 @@ public class GTS_Player : GTS_Entity
         Cursor.lockState = CursorLockMode.Locked;
 
         _mouseInput = Vector2.zero;
+
+        GTS_camera.inst.SetPosition(transform, _lookAtTarget);
     }
 
     // Update is called once per frame
     protected void Update()
     {
         ResetScene();
+
+        Pause();
+
+        SetCamera();
+
+        SetTime();
 
         if (_alive && _inControl)
         {
@@ -120,45 +142,106 @@ public class GTS_Player : GTS_Entity
             {
                 PlayerInput();
 
-                
 
-                
             }
 
             MouseLook();
 
+
+
         }
 
 
 
-       
+
 
 
     }
 
-    protected void FixedUpdate()
+    float currentTimeScale = 1;
+
+    private void SetTime()
     {
-        if (!_rotating)
+        if (!_inControl) return;
+        currentTimeScale += Input.mouseScrollDelta.y * Time.deltaTime;
+
+        if (currentTimeScale > 1) currentTimeScale = 1;
+        if (currentTimeScale < 0) currentTimeScale = 0;
+
+        Time.timeScale = currentTimeScale;
+    }
+
+    private void SetCamera()
+    {
+
+        if (Input.GetKeyDown(KeyCode.Alpha1)) //main
         {
-            BodyMovement();
+            _leftCamera.SetActive(false);
+            _rightCamera.SetActive(false);
+            _topCamera.SetActive(false);
+            GTS_camera.inst.SwitchOn();
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2)) //top
+        {
+            GTS_camera.inst.SwitchOff();
+            _leftCamera.SetActive(false);
+            _rightCamera.SetActive(false);
+            _topCamera.SetActive(true);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha3)) //left
+        {
+            GTS_camera.inst.SwitchOff();
+            _rightCamera.SetActive(false);
+            _topCamera.SetActive(false);
+            _leftCamera.SetActive(true);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha4)) //right
+        {
+            GTS_camera.inst.SwitchOff();
+            _leftCamera.SetActive(false);
+            _topCamera.SetActive(false);
+            _rightCamera.SetActive(true);
+        }
 
-            CheckForIsGrounded();
 
-            if (_groundStatus != GroundStatus.isGrounded) FindGroundBellowMe();
 
-            FindFloor();
+    }
 
-            CheckUpright();
+    private void Pause()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (_inControl) Time.timeScale = 0;
+            else Time.timeScale = 1;
 
-            if (_groundStatus != GroundStatus.falling) FixRotation();
-            if (_groundStatus == GroundStatus.falling || _upright) FixRotationForUpright();
+            _inControl = !_inControl;
+
 
         }
+    }
+
+    protected void FixedUpdate()
+    {
+
+        CheckForIsGrounded();
+
+        if (_groundStatus != GroundStatus.isGrounded) FindGroundBellowMe();
+
+        FindFloor();
+
+        CheckUpright();
+
+        BodyMovement();
+
+        if (_groundStatus != GroundStatus.falling) FixRotation();
+        if (_groundStatus == GroundStatus.falling || _upright) FixRotationForUpright();
+
+
 
         ResetInputs();
 
 
-        GTS_DebugUi.inst.DebugLine("GroundedStatus",$"grounded: {_groundStatus.ToString()}");
+        GTS_DebugUi.inst.DebugLine("GroundedStatus", $"grounded: {_groundStatus.ToString()}");
 
         GTS_DebugUi.inst.DebugLine("Sprint", $"Sprint: {_sprinting} ");
 
@@ -177,10 +260,10 @@ public class GTS_Player : GTS_Entity
 
     private void LateUpdate()
     {
-        _direction = Vector3.zero;
+        //_direction = Vector3.zero;
 
-        
 
+        CameraUpdate();
 
 
 
@@ -201,7 +284,12 @@ public class GTS_Player : GTS_Entity
     {
         //Use GetAxisRaw to get a more responsive input
         _mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
+
         _movementInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
+        _movementInput = Vector2.ClampMagnitude(_movementInput, 1);
+
+        
+
 
         if (Input.GetButtonDown("Crounch"))
         {
@@ -215,14 +303,246 @@ public class GTS_Player : GTS_Entity
         }
     }
 
-    
-    IEnumerator RotateDelay()
+    void RotateDownDelay()
     {
-        _canRotate = false;
+        StopAllCoroutines();
 
-        yield return new WaitForSeconds(0.5f);
+        StartCoroutine(RotateDownCoroutine_());
+    }
 
-        _canRotate = true;
+    IEnumerator RotateDownCoroutine_()
+    {
+
+        _canRotateDown = false;
+
+        yield return new WaitForSeconds(_rotateDirChangeDelay);
+
+        _canRotateDown = true;
+    }
+
+    void RotateUpDelay()
+    {
+        StopAllCoroutines();
+
+        StartCoroutine(RotateUpCoroutine());
+    }
+
+    IEnumerator RotateUpCoroutine()
+    {
+        _canRotateUp = false;
+
+        yield return new WaitForSeconds(_rotateDirChangeDelay);
+
+        _canRotateUp = true;
+    }
+
+    //Player's Movement Input
+    private void BodyMovement()
+    {
+
+        //if (!_isGrounded) _movementInput = Vector2.zero;
+        //create movement vectors
+        Vector3 horizontalDir = transform.right * _movementInput.x;
+        Vector3 verticalDir = transform.forward * _movementInput.y;
+
+        _direction = (horizontalDir + verticalDir);
+        _flatDirection = _direction.normalized;
+
+        bool rotate = false;
+
+        if (_flatDirection.magnitude > 0f)
+        {
+            bool hole = CheckForFallingCorner();
+
+            if (!hole) rotate = CheckForWallInFront();
+            else rotate = true;
+        }
+
+        if (rotate) _direction = Vector3.zero;
+
+        //conserve y speed so that fall speed is always the same
+        Vector3 previousVelocity = _myRigidBody.velocity;
+
+        _direction *= _currentSpeed;
+
+        if (_groundStatus != GroundStatus.isGrounded)
+        {
+            _direction = Vector3.ClampMagnitude(_direction, _direction.magnitude / 2);
+        }
+        else
+        {
+           
+        }
+
+        if (_upright) _direction.y = previousVelocity.y; //if i'm upright, preserve fall speed like normal
+        else
+        {    //if I'm not upright and I can find a wall bellow me, try to auto connect with it (this serves to correct the player's position after rotating
+            if (_groundStatus == GroundStatus.thereIsGround) _direction += _fallDir * 5;
+            if (_groundStatus == GroundStatus.isGrounded) _direction += _fallDir;
+
+            //if i'm not upright and i'm falling, then preserve fall speed to go back to ground
+            if (_groundStatus == GroundStatus.falling) _direction.y = previousVelocity.y;
+        }
+
+        //_direction = new Vector3(_direction.x, previousVelocity.y, _direction.z);
+
+        _myRigidBody.velocity = _direction;
+    }
+
+    private bool CheckForWallInFront() //Check if there is something blocking us in the direction we are going
+    {
+        if (!_canRotateUp) return false;
+        //if (_groundStatus == GroundStatus.falling) return false;
+
+        Vector3 direction = _flatDirection.normalized;
+        direction = direction * _colliderSize;
+
+        float extraHeight = _distanceToground / 4f;
+        float lessRange = _distanceToground / 3;
+        extraHeight = Mathf.Clamp(extraHeight, 0, 0.5f);
+        lessRange = Mathf.Clamp(lessRange, 0, 1f);
+
+        Vector3 place = (transform.position + transform.up * 0.1f) + direction - (transform.up * extraHeight) - (direction.normalized * lessRange);
+        //direction.Normalize();
+
+        GTS_DebugUi.inst.DebugLine("distanceToGround", $"distanceToGround: {_distanceToground}");
+
+        //Vector3 pivot = transform.position - direction;
+        Vector3 pivot = transform.TransformPoint(_myCollider.center);
+
+        float rayDistance = Mathf.Clamp(_distanceToground * 2 + 0.5f, 0, 2);
+
+        RaycastHit hit;
+        if (Physics.Raycast(place, direction, out hit, rayDistance)) //There is something blocking us
+        {
+            FloatingTexTManager.inst.CreateText(_lookAtTarget.position, $"the is a wall", 0);
+            Debug.DrawLine(place, place + direction * rayDistance, Color.green);
+
+            RotateToWall(hit, pivot, true); //rotate into it
+            RotateDownDelay();
+            return true;
+        }
+        else
+        {
+            Debug.DrawLine(place, place + direction * .5f, Color.red);
+
+            //if (_groundStatus == GroundStatus.isGrounded && !_sprinting) return CheckForFallingCorner();
+            //else return false;            
+        }
+
+        return false;
+    }
+
+    private bool CheckForFallingCorner() //try to change into a wall bellow me
+    {
+        if (!_canRotateDown) return false;
+        if (_groundStatus == GroundStatus.falling) return false; 
+        //cast 2 rays
+
+        Vector3 myCenter = transform.TransformPoint(_myCollider.center);
+
+        Vector3 groundCheckTarget = transform.position + (_flatDirection.normalized * 0.55f);
+        Vector3 groundCheckDir = groundCheckTarget - myCenter;
+
+        float distance = 1.5f;
+
+        RaycastHit groundCheck;
+        if (Physics.Raycast(myCenter, groundCheckDir, out groundCheck, distance))
+        {
+            Debug.DrawLine(myCenter, myCenter + groundCheckDir * distance, Color.green);
+
+
+        }
+        else
+        {
+            Debug.DrawLine(myCenter, myCenter + groundCheckDir * distance, Color.red);
+
+            Vector3 newTarget = transform.position - transform.up * 0.5f;
+            Vector3 newDir = newTarget - groundCheckTarget;
+
+
+            float newDistance = 1f;
+            RaycastHit wallCheck;
+            if (Physics.Raycast(groundCheckTarget, newDir, out wallCheck, newDistance))
+            {
+                Debug.DrawLine(groundCheckTarget, groundCheckTarget + newDir * newDistance, Color.green);
+
+                RaycastHit SecondGroundCheck; //check if there is ground in front
+                float groundCheckDistance = 1f;
+                Vector3 direction = _flatDirection;
+                if (Physics.Raycast(wallCheck.point, direction, out SecondGroundCheck, 1))
+                {
+                    Debug.DrawLine(wallCheck.point, wallCheck.point + direction * groundCheckDistance, Color.green);
+                    StopAllCoroutines();
+                    _canRotateUp = true;
+                    return false;
+                }
+                else
+                {
+                    Debug.DrawLine(wallCheck.point, wallCheck.point + direction * groundCheckDistance, Color.red);
+
+                    Vector3 vector = (transform.position + _flatDirection) - transform.position;
+                    Vector3 vector2 = wallCheck.point - transform.position;
+
+                    float angle = Vector3.Angle(vector, vector2);
+
+                    vector2 = Quaternion.AngleAxis(angle, Vector3.Cross(_flatDirection, transform.up)) * vector2;
+
+                    //Vector3 pivot = Vector3.Project(wallCheck.point, vector);
+                    Vector3 pivot = transform.position + vector2;
+
+                    //Debug.Log($"Pivot: {pivot}");
+                    //pivot += transform.position;
+                   // Debug.Log($"PivotAfter: {pivot}");
+
+                    Debug.DrawLine(transform.position, transform.position + vector.normalized, Color.white, 1, false);
+                    Debug.DrawLine(pivot, pivot + vector.normalized, Color.yellow, 5, false);
+                    //Debug.Break();
+
+                    //we found it! rotate!
+                    FloatingTexTManager.inst.CreateText(transform.position, $"the is a hole", 0);
+                    RotateToWall(wallCheck, wallCheck.point, false);
+
+                    RotateUpDelay();
+                    return true;
+                }
+
+
+            }
+            else
+            {
+                Debug.DrawLine(groundCheckTarget, groundCheckTarget + newDir * newDistance, Color.red);
+            }
+        }
+
+
+
+        return false;
+
+
+
+    }
+
+
+
+    private void RotateToWall(RaycastHit hit, Vector3 pivot, bool up)
+    {
+        //Vector3 rotationVector = Vector3.Cross(-hit.normal.normalized, transform.up);
+        //rotationVector.Normalize();
+
+        Vector3 rotationVector = Vector3.Cross(_flatDirection, transform.up);
+        rotationVector.Normalize();
+
+        //Debug.Log($"rotation vector: {rotationVector}");
+
+        //float angle = Vector3.Angle(transform.up.normalized, hit.normal.normalized);
+        //StartCoroutine(RotatePlayerByPoint(rotPoint, rotationVector, 0, angle));
+
+        //rotate with player input
+        RotatePlayerByInput(pivot, rotationVector, up);
+
+        // _groundStatus = GroundStatus.isGrounded;
+        //StartCoroutine(RotateDelay());
     }
 
     IEnumerator RotatePlayerByPoint(Vector3 point, Vector3 rotationVector, float currentAngleDone, float totalAngle)
@@ -236,7 +556,7 @@ public class GTS_Player : GTS_Entity
         _groundStatus = GroundStatus.isGrounded;
 
 
-        float ammount = 90 * _rotationSpeed * Time.deltaTime;
+        float ammount = 25;
         currentAngleDone += ammount;
 
         if (currentAngleDone < totalAngle)
@@ -250,117 +570,24 @@ public class GTS_Player : GTS_Entity
         else
         {
             _myRigidBody.useGravity = true;
-             _rotating = false;
+            _rotating = false;
         }
     }
 
-    //Player's Movement Input
-    private void BodyMovement()
+    void RotatePlayerByInput(Vector3 pivot, Vector3 rotationVector, bool up)
     {
-        _movementInput = Vector2.ClampMagnitude(_movementInput, 1);
+        _myRigidBody.useGravity = false;
+        // _rotating = true;
+        _upright = false;
 
-        //if (!_isGrounded) _movementInput = Vector2.zero;
+        float Up = -1;
+        if (up) Up = 1;
 
-        Vector3 myForward = transform.forward;
+        //_groundStatus = GroundStatus.isGrounded;
 
-        //conserve y speed so that fall speed is always the same
-        Vector3 previousVelocity = _myRigidBody.velocity;
+        float ammount = 90 * _rotationSpeed * Time.deltaTime;
 
-        //create movement vectors
-        Vector3 horizontalDir = transform.right * _movementInput.x;
-        Vector3 verticalDir = transform.forward * _movementInput.y;
-
-        _direction = (horizontalDir + verticalDir);
-        _flatDirection = _direction;
-        //_direction = AdjustDirectionToGround(_direction);
-        _direction *= _currentSpeed;        
-
-        
-        if (_upright) _direction.y = previousVelocity.y; //if i'm upright, preserve fall speed like normal
-        else
-        {    //if I'm not upright and I can find a wall bellow me, try to auto connect with it (this serves to correct the player's position after rotating
-            if (_groundStatus == GroundStatus.thereIsGround || _groundStatus == GroundStatus.isGrounded) _direction += _fallDir * 3;
-
-            //if i'm not upright and i'm falling, then preserve fall speed to go back to ground
-            if (_groundStatus == GroundStatus.falling) _direction.y = previousVelocity.y;
-        }
-        
-
-        //_direction = new Vector3(_direction.x, previousVelocity.y, _direction.z);
-
-        _myRigidBody.velocity = _direction;
-
-        if (_movementInput.magnitude > 0.2f && _canRotate) CheckForSurfaceChange();
-
-    }
-
-    private void CheckForSurfaceChange() //try to change into a wall in front of me
-    {
-        Vector3 direction = _flatDirection.normalized;
-
-        direction = direction * _colliderSize;
-
-        Vector3 place = _feet.position + direction + transform.up * 0.1f;
-        direction.Normalize();
-
-        RaycastHit hit;
-        if (Physics.Raycast(place, direction, out hit, 0.5f)) //There is a wall
-        {
-            Debug.DrawLine(place, place + direction * .5f, Color.green);
-
-            RotateToWall(hit);
-        }
-        else
-        {
-            Debug.DrawLine(place, place + direction * .5f, Color.red);
-
-            if (_groundStatus == GroundStatus.isGrounded && !_sprinting) CheckForFallingCorner();
-        }
-    }
-
-    private void CheckForFallingCorner() //try to change into a wall bellow me
-    {
-        Vector3 CheckPos = transform.position - transform.up * 0.2f;
-
-        Vector3 checkDirection = -_flatDirection.normalized;
-
-        RaycastHit hit;
-        if (Physics.Raycast(CheckPos, checkDirection, out hit, 0.5f)) //There is a wall
-        {
-            Debug.DrawLine(CheckPos, CheckPos + checkDirection * .3f, Color.green);
-            RotateToWall(hit, false);
-
-            FloatingTexTManager.inst.CreateText(hit.point, $"Found wall on this point {hit.point}", 0);
-            Debug.Log($"Found wall on this point {hit.point}");            
-
-            return;
-        }     
-
-    }
-
-    private void RotateToWall(RaycastHit hit, bool bycenter = true)
-    {
-        Vector3 rotPoint = transform.position;
-        if (bycenter) rotPoint = transform.TransformPoint(_myCollider.center);
-
-        Vector3 rotationVector = Vector3.Cross(-hit.normal.normalized, transform.up);
-        rotationVector.Normalize();
-
-        //Debug.Log($"rotation vector: {rotationVector}");
-
-        float angle = Vector3.Angle(transform.up.normalized, hit.normal.normalized);
-
-        FloatingTexTManager.inst.CreateText(LookAtTarget.position, $"Angle: {angle}", 0);
-        
-        StartCoroutine(RotatePlayerByPoint(rotPoint, rotationVector, 0, angle));
-
-        _myRigidBody.velocity = Vector3.zero;
-
-
-        _groundStatus = GroundStatus.isGrounded;
-
-
-        StartCoroutine(RotateDelay());
+        transform.RotateAround(pivot, rotationVector, ammount * Up);
     }
 
     private void CheckForIsGrounded()
@@ -371,15 +598,16 @@ public class GTS_Player : GTS_Entity
             _groundStatus = GroundStatus.isGrounded;
             Debug.DrawLine(_feet.position, _feet.position - transform.up * .5f, Color.green);
 
+            _distanceToground = Vector3.Distance(transform.position, hit.point);
+
             groundNormal = hit.normal;
-            
+
             if (_upright) _myRigidBody.useGravity = true;
             else
             {
                 _fallDir = -groundNormal;
                 _myRigidBody.useGravity = false;
-            } 
-
+            }
         }
         else
         {
@@ -389,17 +617,17 @@ public class GTS_Player : GTS_Entity
             _myRigidBody.useGravity = true;
             _fallDir = Vector3.zero;
         }
-
-        
     }
 
     private void FindGroundBellowMe()
     {
         RaycastHit hit;
-        if (Physics.Raycast(_feet.position, -transform.up, out hit, 5f)) //Found floor
+        if (Physics.Raycast(_feet.position, -transform.up, out hit, 2f)) //Found floor
         {
             if (_groundStatus != GroundStatus.isGrounded) _groundStatus = GroundStatus.thereIsGround;
             Debug.DrawLine(_feet.position, _feet.position - transform.up * 5f, Color.green);
+
+            _distanceToground = Vector3.Distance(transform.position, hit.point);
 
             groundNormal = hit.normal;
             _fallDir = -groundNormal;
@@ -419,12 +647,12 @@ public class GTS_Player : GTS_Entity
         RaycastHit hit;
         if (Physics.Raycast(_feet.position, -Vector3.up, out hit, 5f)) //Found floor
         {
-            Debug.DrawLine(_feet.position, _feet.position - Vector3.up * 5f, Color.green);
+            //Debug.DrawLine(_feet.position, _feet.position - Vector3.up * 5f, Color.white);
             _foundfloor = true;
         }
         else
         {
-            Debug.DrawLine(_feet.position, _feet.position - Vector3.up * 5f, Color.red);
+            //Debug.DrawLine(_feet.position, _feet.position - Vector3.up * 5f, Color.red);
             _foundfloor = false;
         }
     }
@@ -438,35 +666,39 @@ public class GTS_Player : GTS_Entity
         if (angle < 10) _upright = true;
         else _upright = false;
 
-        GTS_DebugUi.inst.DebugLine( "Upright",$"Upright: {_upright}");
+        GTS_DebugUi.inst.DebugLine("Upright", $"Upright: {_upright}");
 
     }
 
     private void FixRotation()
     {
+        if (_distanceToground < 2)
+        {
 
-             float ammount = 1 * Time.deltaTime;
 
-             //Vector3 tanget = GetTangent(groundNormal);
+            float ammount = 1 * Time.deltaTime;
+
+            //Vector3 tanget = GetTangent(groundNormal);
 
             Vector3 forward = Vector3.ProjectOnPlane(transform.forward.normalized, groundNormal.normalized);
 
-             Quaternion rotation = Quaternion.LookRotation(forward, groundNormal);
+            Quaternion rotation = Quaternion.LookRotation(forward, groundNormal);
 
             //transform.RotateAround(transform.position, transform.right, ammount);
 
             transform.rotation = Quaternion.Lerp(transform.rotation, rotation, ammount);
 
             //float angleAgain = Vector3.Angle(transform.up, groundNormal);
+        }
     }
 
     private void FixRotationForUpright()
     {
 
         float ammount = 3 * Time.deltaTime;
-        
+
         Vector3 v = new Vector3(transform.forward.x, 0, transform.forward.z);
-        
+
 
 
         Quaternion rotation = Quaternion.LookRotation(v, Vector3.up);
@@ -477,10 +709,15 @@ public class GTS_Player : GTS_Entity
     }
 
     private void MouseLook()
-    { 
-        GTS_camera.inst.UpdateCameraPosition(_mouseInput, _sensitivity, _verticalRotationSpeed, transform, LookAtTarget);
+    {
 
-        transform.rotation *= Quaternion.Euler(_mouseInput.x * _sensitivity * _horizontalRotationSpeed * Time.deltaTime * Vector3.up);        
+        transform.rotation *= Quaternion.Euler(_mouseInput.x * _sensitivity * _horizontalRotationSpeed * Time.deltaTime * Vector3.up);
+
+    }
+
+    private void CameraUpdate()
+    {
+        GTS_camera.inst.UpdateCameraPosition(_mouseInput, _sensitivity, _verticalRotationSpeed, transform, _lookAtTarget);
     }
 
     void ResetScene()

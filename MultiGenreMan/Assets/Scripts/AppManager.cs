@@ -8,6 +8,9 @@ public class AppManager : MonoBehaviour
     private static AppManager _instance;
     public static AppManager inst { get { return _instance; } }
 
+    [SerializeField]
+    private bool _debug = true;
+    public bool Debug => _debug;
 
     private void Awake()
     {

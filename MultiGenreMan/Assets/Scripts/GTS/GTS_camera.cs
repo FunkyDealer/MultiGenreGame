@@ -23,6 +23,22 @@ public class GTS_camera : MonoBehaviour
 
     private Camera _myCamera;
 
+    private Vector3 _currentUp;
+    private Vector3 _targetUp;
+
+    private Vector3 _currentLookAt;
+
+    private Vector3 _targetPosition;
+
+    private Quaternion _targetRotation;
+
+    [SerializeField]
+    private bool _active;
+
+    Vector3 _smoothPosition;
+
+    bool _on = true;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -43,24 +59,14 @@ public class GTS_camera : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _FollowTarget = GTS_GameManager.inst.Player.transform;
 
-        SetPosition();
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        //if (_FollowTarget != null)
-        //{
 
-        //    UpdateCameraPositon();
-
-
-        //    UpdateCameraRotation();
-
-
-        //}
 
 
     }
@@ -70,36 +76,22 @@ public class GTS_camera : MonoBehaviour
         
     }
 
-    private void SetPosition()
+    public void SetPosition(Transform target, Transform lookAtTarget)
     {
-        transform.position = _FollowTarget.position;
 
-        _offset = new Vector3(_xOffset, _yOffset, -_zOffset);
+        Vector3 myPoint = target.position - target.forward.normalized * _zOffset;
+        myPoint += target.up.normalized * _yOffset;
 
-        transform.position += GTS_GameManager.inst.Player.OffSet;
+        if (_active)
+        {
+            transform.position = myPoint;
+            transform.LookAt(lookAtTarget.position, target.up);
+        }
 
-        //transform.LookAt(_lookAtTarget.position);
+        _currentUp = transform.up;
+        _currentLookAt = lookAtTarget.position;
     }
 
-    private void UpdateCameraPositon()
-    {
-        _offset = new Vector3(_xOffset, _yOffset, -_zOffset);
-
-        Vector3 target = _FollowTarget.TransformPoint(GTS_GameManager.inst.Player.OffSet);
-
-        //transform.position = _FollowTarget.position + _offset;
-        transform.position = target;     
-
-
-
-    }
-
-    private void UpdateCameraRotation()
-    {
-       // transform.rotation = _FollowTarget.rotation;
-
-       // transform.LookAt(_lookAtTarget.position, _lookAtTarget.up);
-    }
 
     private float _lookPosOffset = 0;
 
@@ -126,33 +118,54 @@ public class GTS_camera : MonoBehaviour
                 _lookPosOffset = 0;
 
             }
-
         }
-
-       // GTS_DebugUi.inst.ChangeDebugLine1($"yOffset: {_yOffset}");
-       // GTS_DebugUi.inst.ChangeDebugLine2($"LookPosOffset: {_lookPosOffset}");
 
         Vector3 myPoint = target.position - target.forward.normalized * _zOffset;
         myPoint += target.up.normalized * _yOffset;
-
 
         Vector3 lookAtPoint = lookAtTarget.position;
 
         lookAtPoint += lookAtTarget.up.normalized * _lookPosOffset;
 
-        //pitch += mouse.y * sensivity * speed * Time.deltaTime;
+        _currentLookAt = Vector3.Lerp(_currentLookAt, lookAtPoint, Time.deltaTime * 5);
+        _currentUp = Vector3.Lerp(_currentUp, target.up, Time.deltaTime * 5);
 
-        //rotate the camera arround the target's right vector
-        transform.position = myPoint;
+        GTS_DebugUi.inst.DebugLine("CurrentLookAt", $"CurrentLookat: {_currentLookAt}");
 
-        transform.RotateAround(target.position, target.right, pitch);
+        GTS_DebugUi.inst.DebugLine("TargetLookAt", $"TargetLookAt: {lookAtPoint}");        
 
-        
+        if (_active)
+        {
+            
+            _smoothPosition = Vector3.Lerp(transform.position, myPoint, Time.deltaTime * 9  );
+            //_smoothPosition = Vector3.SmoothDamp(transform.position, myPoint, ref velocity, 0.25f);
+            transform.position = _smoothPosition;
+            transform.LookAt(lookAtPoint, _currentUp);
+            
+        }
 
 
-        transform.LookAt(lookAtPoint, target.up);
 
-        //transform.rotation = target.rotation;
     }
+
+    public void SwitchOff()
+    {
+        _on = false;
+
+        _myCamera.enabled = _on;
+
+
+
+    }
+
+    public void SwitchOn()
+    {
+        _on = true;
+
+        _myCamera.enabled = _on;
+    }
+
+
+    Vector3 velocity = Vector3.zero;
 
 }
