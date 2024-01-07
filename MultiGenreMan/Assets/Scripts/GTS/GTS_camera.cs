@@ -27,10 +27,9 @@ public class GTS_camera : MonoBehaviour
     private Vector3 _targetUp;
 
     private Vector3 _currentLookAt;
-
     private Vector3 _targetPosition;
-
     private Quaternion _targetRotation;
+    private Vector3 _targetLookAt;
 
     [SerializeField]
     private bool _active;
@@ -38,6 +37,10 @@ public class GTS_camera : MonoBehaviour
     Vector3 _smoothPosition;
 
     bool _on = true;
+
+    [SerializeField] float _smoothTranslationSpeed = 7;
+    [SerializeField] float _smoothLookSpeed = 5;
+    [SerializeField] float _smoothRotationSpeed = 5;
 
     private void Awake()
     {
@@ -68,12 +71,27 @@ public class GTS_camera : MonoBehaviour
     {
 
 
-
+      
     }
 
     private void FixedUpdate()
     {
-        
+        if (_active)
+        {
+            _currentLookAt = Vector3.Lerp(_currentLookAt, _targetLookAt, Time.deltaTime * _smoothLookSpeed);
+            _smoothPosition = Vector3.Lerp(transform.position, _targetPosition, _smoothTranslationSpeed * Time.deltaTime);
+            _currentUp = Vector3.Lerp(_currentUp, _targetUp, Time.deltaTime * _smoothRotationSpeed);
+
+            //_smoothPosition = Vector3.SmoothDamp(transform.position, myPoint, ref velocity, 0.25f);
+            transform.position = _smoothPosition;
+            transform.LookAt(_currentLookAt, _currentUp);
+
+        }
+    }
+
+    private void LateUpdate()
+    {
+
     }
 
     public void SetPosition(Transform target, Transform lookAtTarget)
@@ -95,22 +113,33 @@ public class GTS_camera : MonoBehaviour
 
     private float _lookPosOffset = 0;
 
+    [SerializeField] float _maxYOffset = 10;
+    [SerializeField] float _minYOffset = 2.5f;
+    [SerializeField] float _LowestYoffSet = 0.5f;
+    [SerializeField] float _maxLookPosOffSet = 10;
+
+
     public void UpdateCameraPosition(Vector2 mouse, float sensitivity, float speed, Transform target, Transform lookAtTarget)
     {
         if (_lookPosOffset < 0.01) _yOffset -= mouse.y * sensitivity * speed * Time.deltaTime;
 
-        if (_yOffset >= 10) _yOffset = 10;
-        if (_yOffset <= 3)
+        if (_yOffset >= _maxYOffset) _yOffset = _maxYOffset;
+        if (_yOffset <= _minYOffset)
         {
-            _yOffset = 3;
+            //_yOffset = _minYOffset;
+
+
+            
 
             //raise the look target
-
             _lookPosOffset -= -mouse.y * sensitivity * speed * Time.deltaTime;
+            //_yOffset -= _lookPosOffset;
 
-            if (_lookPosOffset > 5)
+            if (_yOffset <= _LowestYoffSet) _yOffset = _LowestYoffSet;
+
+            if (_lookPosOffset > _maxLookPosOffSet)
             {
-                _lookPosOffset = 5;
+                _lookPosOffset = _maxLookPosOffSet;
             }
 
             if (_lookPosOffset < 0)
@@ -122,27 +151,19 @@ public class GTS_camera : MonoBehaviour
 
         Vector3 myPoint = target.position - target.forward.normalized * _zOffset;
         myPoint += target.up.normalized * _yOffset;
+        _targetPosition = myPoint;
 
         Vector3 lookAtPoint = lookAtTarget.position;
-
         lookAtPoint += lookAtTarget.up.normalized * _lookPosOffset;
+        _targetLookAt = lookAtPoint;        
 
-        _currentLookAt = Vector3.Lerp(_currentLookAt, lookAtPoint, Time.deltaTime * 5);
-        _currentUp = Vector3.Lerp(_currentUp, target.up, Time.deltaTime * 5);
+        _targetUp = target.up;
 
         GTS_DebugUi.inst.DebugLine("CurrentLookAt", $"CurrentLookat: {_currentLookAt}");
 
         GTS_DebugUi.inst.DebugLine("TargetLookAt", $"TargetLookAt: {lookAtPoint}");        
 
-        if (_active)
-        {
-            
-            _smoothPosition = Vector3.Lerp(transform.position, myPoint, Time.deltaTime * 9  );
-            //_smoothPosition = Vector3.SmoothDamp(transform.position, myPoint, ref velocity, 0.25f);
-            transform.position = _smoothPosition;
-            transform.LookAt(lookAtPoint, _currentUp);
-            
-        }
+
 
 
 
