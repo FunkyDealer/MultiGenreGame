@@ -16,14 +16,22 @@ public class OctTree
         NodesByID = new Dictionary<int, OctTreeNode>();
         Bounds bounds = new Bounds();
 
-        foreach (var g in worldObjects)
-        {
-            bounds.Encapsulate(g.GetComponent<Collider>().bounds);
-        }
+        //foreach (var g in worldObjects)
+        //{
+        //    bounds.Encapsulate(g.GetComponent<Collider>().bounds);
+        //}
 
-        float maxSize = Mathf.Max(new float[] {bounds.size.x, bounds.size.y, bounds.size.z});
+        //float maxSize = Mathf.Max(new float[] {bounds.size.x, bounds.size.y, bounds.size.z});
+        //Vector3 sizeVector = new Vector3(maxSize, maxSize, maxSize);
+        //sizeVector *= 0.5f; //half it because it measures size from center of objects to edge
+        //bounds.SetMinMax(bounds.center - sizeVector, bounds.center + sizeVector);
+
+        Vector3 size = OctTreeManager.inst.MyBoundsSize;
+        bounds.size = size;
+
+        float maxSize = Mathf.Max(new float[] { bounds.size.x, bounds.size.y, bounds.size.z });
         Vector3 sizeVector = new Vector3(maxSize, maxSize, maxSize);
-        sizeVector *= 0.5f; //half it because it measures size from center of objects to edge
+        sizeVector = size * 0.5f;
         bounds.SetMinMax(bounds.center - sizeVector, bounds.center + sizeVector);
 
         int totalNodes = 0;
@@ -91,7 +99,7 @@ public class OctTree
                 for (int r = 0; r < 6; r++) //iterate through each ray direction to find neighbours
                 {
                     Ray ray = new Ray(Emptyleafs[i].Pos, rays[r]);
-                    float maxLengh = Emptyleafs[i].myBounds.size.y / 2.0f + 0.01f;
+                    float maxLengh = GetSize(rays[r], Emptyleafs[i].myBounds.size) / 2.0f + 0.01f;
                     float hitlengh;
                     if (Emptyleafs[j].myBounds.IntersectRay(ray, out hitlengh))
                     {
@@ -110,6 +118,22 @@ public class OctTree
         }
 
         return graph;
+    }
+
+    //get the box's size that matches de ray's direction
+    float GetSize(Vector3 ray, Vector3 BoxSize)
+    {
+        float size = BoxSize.y;
+
+        float rayX = Mathf.Abs(ray.x);
+        float rayY = Mathf.Abs(ray.y);
+        float rayZ = Mathf.Abs(ray.z);
+
+        if (rayX > 0) size = BoxSize.x;
+        if (rayY > 0) size = BoxSize.y;
+        if (rayZ > 0) size = BoxSize.z;
+
+        return size;
     }
 
     public OctTreeNode FindClosestNodeTo(Vector3 position)
@@ -181,6 +205,8 @@ public class OctTree
     public void Draw()
     {
         rootNode.Draw();
+
     }
+
 
 }

@@ -18,18 +18,26 @@ public class FlyingNodeAgent : MonoBehaviour
     Node _nextNode = null;
     List<Node> _currentPath = new List<Node>();
 
-
-    int _manualGoToNode = 0;
-
     [SerializeField]
-    private TMP_InputField mainInputField;
+    Color _pathColor = Color.white;
 
     // Start is called before the first frame update
     void Start()
     {
-        mainInputField.onEndEdit.AddListener(delegate { ChangeManualNode(mainInputField.text); });
 
         if (OctTreeManager.inst.NavGraph != null) GetCurrentNode();
+
+        StartCoroutine(StartAreaPatrol());
+    }
+
+    IEnumerator StartAreaPatrol()
+    {
+        yield return new WaitForSeconds(1f);
+
+
+
+        SelectDestinationAtRandom();
+
     }
 
     // Update is called once per frame
@@ -39,48 +47,17 @@ public class FlyingNodeAgent : MonoBehaviour
         //{
         //    GetCurrentNode();
         //}
-        if (!_moving && Input.GetButtonDown("Jump"))
-        {
-            SelectDestinationAtRandom();
-        }
+        //if (!_moving && Input.GetButtonDown("Jump"))
+        //{
+        //    SelectDestinationAtRandom();
+        //}
 
     }
 
     private void FixedUpdate()
     {
         if (_moving) MoveToNextNode();
-    }
-
-    public void ChangeManualNode(string s)
-    {
-        int n = int.Parse(s);
-        _manualGoToNode = n;
-    }
-
-    public void ManualGoTo()
-    {
-        if (!_moving)
-        {
-            if (_currentNode == null)
-            {
-                _closestNode = OctTreeManager.inst.NavGraph.FindClosestNodeTo(transform.position);
-                Debug.Log($"Agent was not inside the tree, Moving to node {_closestNode.ID}");
-            }
-            else
-            {
-                _closestNode = null;
-                Node nextNode = OctTreeManager.inst.NavGraph.GetNode(_manualGoToNode);
-                Debug.Log($"Agent Inside tree, Moving to node nr {nextNode.ID}");
-
-                OctTreeManager.inst.NavGraph.AStarPathFind(_currentNode, nextNode, ref _currentPath);
-                Debug.Log($"Current path has {_currentPath.Count} nodes");
-                if (_currentPath.Count > 0) _nextNode = _currentPath[0];
-                else _nextNode = null;
-            }
-
-            _moving = true;
-        }
-    }
+    }   
 
     void GetCurrentNode()
     {
@@ -88,11 +65,11 @@ public class FlyingNodeAgent : MonoBehaviour
 
         if (_currentNode != null)
         {
-            Debug.Log($"Agent is in node {_currentNode.ID}");
+            //Debug.Log($"Agent is in node {_currentNode.ID}");
         }
         else
         {
-            Debug.Log("agent is not in node");
+           // Debug.Log("agent is not in node");
         }
     }
 
@@ -103,16 +80,16 @@ public class FlyingNodeAgent : MonoBehaviour
         if (_currentNode == null)
         {
             _closestNode = OctTreeManager.inst.NavGraph.FindClosestNodeTo(transform.position);
-            Debug.Log($"Agent was not inside the tree, Moving to node {_closestNode.ID}");
+            //Debug.Log($"Agent was not inside the tree, Moving to node {_closestNode.ID}");
         }
         else
         {
             _closestNode = null;
             Node nextNode = OctTreeManager.inst.NavGraph.GetRandomNode();
-            Debug.Log($"Agent Inside tree, Moving to node nr {nextNode.ID}");
+            //Debug.Log($"Agent Inside tree, Moving to node nr {nextNode.ID}");
 
-            OctTreeManager.inst.NavGraph.AStarPathFind(_currentNode, nextNode, ref _currentPath);
-            Debug.Log($"Current path has {_currentPath.Count} nodes");
+            PathFinding.AStarPathFind(_currentNode, nextNode, ref _currentPath);
+            //Debug.Log($"Current path has {_currentPath.Count} nodes");
             _nextNode = _currentPath[0];
         }
 
@@ -142,6 +119,7 @@ public class FlyingNodeAgent : MonoBehaviour
                     _nextNode = null;
                     //arrived
                     _moving = false;
+                    SelectDestinationAtRandom();
                 } 
                 else
                 {
@@ -153,6 +131,7 @@ public class FlyingNodeAgent : MonoBehaviour
                     else
                     {
                         _moving = false;
+                        SelectDestinationAtRandom();
                     }
                 }                
             }
@@ -176,5 +155,22 @@ public class FlyingNodeAgent : MonoBehaviour
         }
 
 
+    }
+
+
+    private void OnDrawGizmos()
+    {
+        //if (_currentPath.Count > 0)
+        //{
+        //    for (int i = 0; i < _currentPath.Count; i++)
+        //    {
+        //        if (i + 1 < _currentPath.Count) 
+        //        { 
+        //            Gizmos.color = _pathColor;
+        //            Gizmos.DrawLine(_currentPath[i].Pos, _currentPath[i + 1].Pos);
+        //        }
+
+        //    }
+        //}
     }
 }

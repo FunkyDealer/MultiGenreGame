@@ -15,6 +15,23 @@ public class OctTreeManager : MonoBehaviour
     public OctTree OctTree { get; private set; }
     int totalNodes = 0;
 
+    [SerializeField]
+    GameObject _floor;
+    public Transform Floor => _floor.transform;
+    [SerializeField]
+    private float _floorExtraHeight = 3;
+    public float FloorExtraHeight => _floorExtraHeight;
+
+    [SerializeField]
+    private float _myBoundsSizeX;
+    [SerializeField]
+    private float _myBoundsSizeY;
+    [SerializeField]
+    private float _myBoundsSizeZ;
+    public Vector3 MyBoundsSize => new Vector3(_myBoundsSizeX, _myBoundsSizeY, _myBoundsSizeZ);
+
+    [SerializeField]
+    bool _drawBounds = true;
 
     enum DrawState
     {
@@ -87,5 +104,18 @@ public class OctTreeManager : MonoBehaviour
                     break;
             }
         }
+
+
+#if UNITY_EDITOR
+        if (_drawBounds)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireCube(transform.position, MyBoundsSize);
+        }
+#endif
     }
+
+
+
+
 }

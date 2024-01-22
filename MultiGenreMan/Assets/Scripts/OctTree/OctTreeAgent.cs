@@ -63,13 +63,13 @@ public class OctTreeAgent : MonoBehaviour
         if (_currentNode == null)
         {
             _nextNode = OctTreeManager.inst.OctTree.FindClosestNodeTo(transform.position);
-            Debug.Log($"Agent was not inside the tree, Moving to node {_nextNode.ID}");
+          //  Debug.Log($"Agent was not inside the tree, Moving to node {_nextNode.ID}");
 
         }
         else
         {
             _nextNode = OctTreeManager.inst.OctTree.GetRandomNode();
-            Debug.Log($"Agent Inside tree, Moving to node nr {_nextNode.ID}");
+            //Debug.Log($"Agent Inside tree, Moving to node nr {_nextNode.ID}");
         }
 
         _moving = true;

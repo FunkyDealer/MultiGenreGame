@@ -22,20 +22,22 @@ public class OctTreeNode
         this.myBounds = b;
         this.minSize = minNodeSize;
 
-        float quarter = myBounds.size.y / 4.0f;
-        float childLenght = myBounds.size.y / 2;
-        Vector3 childSize = new Vector3(childLenght, childLenght, childLenght);
+        if (this.myBounds.center.y < OctTreeManager.inst.Floor.position.y + OctTreeManager.inst.FloorExtraHeight) occupied = true; //sets all nodes close or under the floor as occupied
+
+        Vector3 quarter = myBounds.size / 4.0f;
+        Vector3 childLenght = myBounds.size / 2;
+        Vector3 childSize = new Vector3(childLenght.x, childLenght.y, childLenght.z);
 
         childBounds = new Bounds[8];
 
-        childBounds[0] = new Bounds(myBounds.center + new Vector3(-quarter, quarter, -quarter), childSize);
-        childBounds[1] = new Bounds(myBounds.center + new Vector3(quarter, quarter, -quarter), childSize);
-        childBounds[2] = new Bounds(myBounds.center + new Vector3(-quarter, quarter, quarter), childSize);
-        childBounds[3] = new Bounds(myBounds.center + new Vector3(quarter, quarter, quarter), childSize);
-        childBounds[4] = new Bounds(myBounds.center + new Vector3(-quarter, -quarter, -quarter), childSize);
-        childBounds[5] = new Bounds(myBounds.center + new Vector3(quarter, -quarter, -quarter), childSize);
-        childBounds[6] = new Bounds(myBounds.center + new Vector3(-quarter, -quarter, quarter), childSize);
-        childBounds[7] = new Bounds(myBounds.center + new Vector3(quarter, -quarter, quarter), childSize);
+        childBounds[0] = new Bounds(myBounds.center + new Vector3(-quarter.x, quarter.y, -quarter.z), childSize);
+        childBounds[1] = new Bounds(myBounds.center + new Vector3(quarter.x, quarter.y, -quarter.z), childSize);
+        childBounds[2] = new Bounds(myBounds.center + new Vector3(-quarter.x, quarter.y, quarter.z), childSize);
+        childBounds[3] = new Bounds(myBounds.center + new Vector3(quarter.x, quarter.y, quarter.z), childSize);
+        childBounds[4] = new Bounds(myBounds.center + new Vector3(-quarter.x, -quarter.y, -quarter.z), childSize);
+        childBounds[5] = new Bounds(myBounds.center + new Vector3(quarter.x, -quarter.y, -quarter.z), childSize);
+        childBounds[6] = new Bounds(myBounds.center + new Vector3(-quarter.x, -quarter.y, quarter.z), childSize);
+        childBounds[7] = new Bounds(myBounds.center + new Vector3(quarter.x, -quarter.y, quarter.z), childSize);
 
         myTree.AddNodeToDictionary(ID, this);
     }
@@ -48,7 +50,7 @@ public class OctTreeNode
     private void DivideAndAdd(GameObject g, ref int nodes, OctTree myTree)
     {       
 
-        if (myBounds.size.y <= minSize)
+        if (myBounds.size.x <= minSize || myBounds.size.y <= minSize || myBounds.size.z <= minSize)
         {
             Collider b = g.GetComponent<Collider>();
             if (myBounds.Intersects(b.bounds)) occupied = true;
