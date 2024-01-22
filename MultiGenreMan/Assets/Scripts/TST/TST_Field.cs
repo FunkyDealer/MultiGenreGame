@@ -7,7 +7,6 @@ public class TST_Field : MonoBehaviour
     private static TST_Field _instance;
     public static TST_Field inst { get { return _instance; } }
 
-
     [SerializeField]
     private int _WIDTH;
     [SerializeField]
@@ -17,22 +16,26 @@ public class TST_Field : MonoBehaviour
     [SerializeField]
     private GameObject _SPACEPREFAB;
 
-
-    public static int _width { get; private set; }
-    public static int _length { get; private set; }
+    public static int _totalWidth { get; private set; }
+    public static int _totalLength { get; private set; }
     private static float _spaceSize;
     private static GameObject _spacePrefab;
 
     private static TST_Space[,] _grid;
 
-
-
-
-
     private void Awake()
     {
-        _width = _WIDTH;
-        _length = _LENGTH;
+        if (_instance != null && _instance != this)
+        {
+            Destroy(this.gameObject);
+        }
+        else
+        {
+            _instance = this;
+        }
+
+        _totalWidth = _WIDTH;
+        _totalLength = _LENGTH;
         _spaceSize = _SIZE;
         _spacePrefab = _SPACEPREFAB;
     }
@@ -40,12 +43,12 @@ public class TST_Field : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _grid = new TST_Space[_width, _length];
+        _grid = new TST_Space[_totalWidth, _totalLength];
 
 
-        for (int w = 0; w < _width; w++) //create grid
+        for (int w = 0; w < _totalWidth; w++) //create grid
         {
-            for (int l = 0; l < _length; l++)
+            for (int l = 0; l < _totalLength; l++)
             {
                 _grid[w, l] = CreateSpace(w, l);
 
@@ -72,7 +75,7 @@ public class TST_Field : MonoBehaviour
 
     private TST_Space CreateSpace(int width, int length)
     {
-        Vector3 pos = new Vector3(transform.position.x + (width * _spaceSize) - (_width / 2 * _spaceSize), 0.02f, transform.position.z + (length * _spaceSize) - (_length / 2 * _spaceSize));
+        Vector3 pos = new Vector3(transform.position.x + (width * _spaceSize) - (_totalWidth / 2 * _spaceSize), 0.02f, transform.position.z + (length * _spaceSize) - (_totalLength / 2 * _spaceSize));
 
         TST_Space space = Instantiate(_spacePrefab, pos, Quaternion.identity, transform).GetComponent<TST_Space>();
 
@@ -111,7 +114,7 @@ public class TST_Field : MonoBehaviour
 
     public static bool ValidateSpace2D(Vector2Int s)
     {
-        return (s.x < _width && s.x >= 0 && s.y < _length && s.y >= 0);
+        return (s.x < _totalWidth && s.x >= 0 && s.y < _totalLength && s.y >= 0);
 
     }
 }

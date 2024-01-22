@@ -65,8 +65,8 @@ public class TST_GameManager : MonoBehaviour
             Vector2Int space = u.CurrentSpace2D;
             
             //sanitization
-            if (space.x > TST_Field._width -1) space.x = TST_Field._width -1;
-            if (space.y > TST_Field._length -1) space.y = TST_Field._length -1;
+            if (space.x > TST_Field._totalWidth -1) space.x = TST_Field._totalWidth -1;
+            if (space.y > TST_Field._totalLength -1) space.y = TST_Field._totalLength -1;
             if (space.x < 0) space.x = 0;
             if (space.y < 0) space.y = 0;   
             

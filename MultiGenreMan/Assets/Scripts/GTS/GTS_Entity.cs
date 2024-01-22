@@ -16,7 +16,10 @@ public class GTS_Entity : MonoBehaviour
     protected float _currentSpeed;
 
 
+    protected virtual void Awake()
+    {
 
+    }
 
     // Start is called before the first frame update
     protected virtual void Start()
@@ -46,5 +49,12 @@ public class GTS_Entity : MonoBehaviour
     protected virtual void Die()
     {
 
+    }
+
+    public virtual bool SpendAmmo(GTS_Weapon.AMMOTYPE ammoType, int ammount)
+    {
+
+
+        return false;
     }
 }

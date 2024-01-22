@@ -54,7 +54,6 @@ public class GTS_DebugUi : MonoBehaviour
         }
         else
         {
-
             _debugLines[key].text = text;
 
         }
@@ -69,7 +68,7 @@ public class GTS_DebugUi : MonoBehaviour
         GameObject go = Instantiate(_linePrebab,Vector3.zero,Quaternion.identity, _debugMaster.transform);
 
         RectTransform r = go.GetComponent<RectTransform>();
-        r.position = new Vector3(0,40 * ammount,0);
+        r.localPosition = new Vector3(0,-20 * ammount,0);
 
         newLine = go.GetComponent<TMP_Text>();
         newLine.text = text;
