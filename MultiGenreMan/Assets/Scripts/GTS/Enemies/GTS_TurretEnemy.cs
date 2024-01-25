@@ -44,6 +44,8 @@ public class GTS_TurretEnemy : GTS_Enemy
 
     protected override void Awake()
     {
+        base.Awake();
+
         _restForward = transform.forward;
         _targetForward = transform.forward;
 
@@ -69,8 +71,9 @@ public class GTS_TurretEnemy : GTS_Enemy
 
     }
 
-    private void FixedUpdate()
-    {
+    protected new void FixedUpdate()
+    {       
+
         RotateToTarget();
 
         if (_status == AIStatus.Sleep)
@@ -91,7 +94,9 @@ public class GTS_TurretEnemy : GTS_Enemy
             if (_myWeapon.CanShoot) TryToShoot();
 
 
-        }        
+        }
+
+        base.FixedUpdate();
     }
 
     private void GetTargetPosition()
@@ -122,9 +127,7 @@ public class GTS_TurretEnemy : GTS_Enemy
     }
 
     private void RotateToTarget()
-    {
-
-        
+    {       
 
         _turretRot.rotation = Quaternion.Lerp(_turretRot.rotation, _targetRotation, _rotationSpeed * Time.deltaTime);
 
@@ -138,7 +141,7 @@ public class GTS_TurretEnemy : GTS_Enemy
         //check if my forward and target forward match by a fault of 5 degrees
         float angle = Vector3.Angle(_turretRot.forward, _targetForward);
         if (angle > 30) canShoot = false;
-        Debug.Log(angle);
+        //Debug.Log(angle);
 
         if (canShoot)
         {
@@ -160,33 +163,24 @@ public class GTS_TurretEnemy : GTS_Enemy
                     {
                         Debug.DrawLine(_turretRot.position, _turretRot.position + _targetForward * newDistance, Color.green);
                     }
-
-
                 }
                 else
                 {
                     Debug.DrawLine(_turretRot.position, _turretRot.position + _targetForward * newDistance, Color.green);
                 }
-
             }
             else
             {
                 Debug.DrawLine(_turretRot.position, _turretRot.position + _targetForward * distance, Color.green);
             }
-
-
             //shoot
             if (canShoot) Shoot();
-
         }
     }
 
     private void Shoot()
     {
-
         _myWeapon.Shoot();
-
-
     }
 
     public override bool SpendAmmo(GTS_Weapon.AMMOTYPE ammoType, int ammount)
@@ -194,14 +188,11 @@ public class GTS_TurretEnemy : GTS_Enemy
         return true;
     }
 
-
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Player"))
         {
-            _status = AIStatus.Attacking;
-
-           
+            _status = AIStatus.Attacking;           
         }
     }
 
@@ -209,9 +200,7 @@ public class GTS_TurretEnemy : GTS_Enemy
     {
         if (other.gameObject.CompareTag("Player"))
         {
-            _status = AIStatus.Sleep;
-
-          
+            _status = AIStatus.Sleep;          
         }
     }
 

@@ -3,11 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OctTreeManager : MonoBehaviour
+public class OctTreeManager : NavigationManager
 {
-    private static OctTreeManager _instance;
-    public static OctTreeManager inst { get { return _instance; } }
-
     [SerializeField]
     private GameObject[] _worldObjects;
     [SerializeField]
@@ -41,32 +38,22 @@ public class OctTreeManager : MonoBehaviour
     }
 
     [SerializeField] DrawState _drawState = DrawState.DrawGraph;
-
     
-    public Graph NavGraph { get; private set; } = null;
 
     private void Awake()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(this.gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
 
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        OctTree = new OctTree(_worldObjects, _nodeMinSize);
+        OctTree = new OctTree(_worldObjects, _nodeMinSize, this);
         totalNodes = OctTree.TotalNodes;
         Debug.Log($"Total OctTree Nodes: {totalNodes}");
 
-        NavGraph = OctTree.CreateGraph();
-        Debug.Log($"Total graph nodes: {NavGraph.TotalNodes()}");
+        _navGraph = OctTree.CreateGraph();
+        Debug.Log($"Total graph nodes: {_navGraph.TotalNodes()}");
     }
 
     // Update is called once per frame
@@ -80,10 +67,6 @@ public class OctTreeManager : MonoBehaviour
        
     }
 
-    
-
-
-
     private void OnDrawGizmos()
     {
         if (Application.isPlaying)
@@ -94,7 +77,7 @@ public class OctTreeManager : MonoBehaviour
                     OctTree.Draw();
                     break;                    
                 case DrawState.DrawGraph:
-                    NavGraph.Draw();
+                    _navGraph.Draw();
                     break;
                 case DrawState.NoDraw:
                     //nothing

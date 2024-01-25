@@ -76,16 +76,16 @@ public class GTS_Bullet : GTS_Projectile
         }
 
 
-        Die(hit);
+        Die(hit, transform.position);
     }
 
 
 
-    private void Die(GTS_Entity hit)
+    private void Die(GTS_Entity hit, Vector3 contactPoint)
     {
         if (hit != null)
         {
-            hit.ReceiveDamage(Damage);
+            hit.ReceiveDamage(Damage, contactPoint);
         }
 
         Destroy(gameObject);

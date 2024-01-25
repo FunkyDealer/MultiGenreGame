@@ -85,6 +85,8 @@ public class FPSPlayer : FPS_Creature
     private int _currentLasers = 0;
     public int CurrentLasers => _currentLasers;
 
+    [SerializeField] bool _invincible = false;
+
     public enum AMMOTYPE {
         BULLET,
         PELLET,
@@ -541,19 +543,14 @@ public class FPSPlayer : FPS_Creature
     {
         float fallenDistance = _highestPositon - transform.position.y;
 
-        ReceiveDamage((int)fallenDistance * 2);
-
-        
+        ReceiveDamage((int)fallenDistance * 2);       
     }
 
     private void GrabOnToWall()
     {
         if (_grabingWall)
         {
-            _myRigidBody.velocity = Vector3.zero;
-            
-
-
+            _myRigidBody.velocity = Vector3.zero;      
         }
     }
 
@@ -569,7 +566,6 @@ public class FPSPlayer : FPS_Creature
     {
         if (_grabingWall && _jump)
         {
-
             ReleaseWall();
 
             _isGrounded = false;
@@ -578,10 +574,7 @@ public class FPSPlayer : FPS_Creature
             float power = 15;
             Vector3 jumpForce = Vector3.up * power;
 
-
-
-            _myRigidBody.AddForce(jumpForce, ForceMode.Impulse);
-           
+            _myRigidBody.AddForce(jumpForce, ForceMode.Impulse);           
         }
     }
     private void TryToGrabWall()
@@ -610,9 +603,7 @@ public class FPSPlayer : FPS_Creature
             //if (_grabingWall) Debug.DrawRay(_crouchPos.position, dir * 3, Color.red, 1f);
             //else Debug.DrawRay(_crouchPos.position, dir * 1.5f, Color.blue, 1f);
 
-
             dir = Quaternion.AngleAxis(45, _crouchPos.up) * dir;
-
         }
     }
 
@@ -632,7 +623,7 @@ public class FPSPlayer : FPS_Creature
         {
             SelectWeaponFromSlot(slot, 0);
         }
-        //_currentlySelectedWeapon = weapon;           
+        //_currentlySelectedWeapon = weapon;         
 
     }
 

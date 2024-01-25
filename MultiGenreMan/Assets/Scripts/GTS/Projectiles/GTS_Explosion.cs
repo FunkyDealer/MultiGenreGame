@@ -36,7 +36,7 @@ public class GTS_Explosion : MonoBehaviour
 
             if (hitEntity != null)
             {
-                hitEntity.ReceiveDamage(Damage);
+                hitEntity.ReceiveDamage(Damage, transform.position);
             }
         }
 

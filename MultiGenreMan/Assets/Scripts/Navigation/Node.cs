@@ -21,6 +21,14 @@ public class Node
         Path = null;
     }
 
+    public Node(Vector3 pos, int ID)
+    {
+        this.Pos = pos;
+        myBounds = new Bounds(pos, new Vector3(1, 1, 1));
+        this.ID=ID;
+        Path = null;
+    }
+
     public void AddConnection(Connection to)
     {
         Connections.Add(to);
@@ -33,6 +41,11 @@ public class Node
 
         Gizmos.color = Color.white;
         UnityEditor.Handles.Label(myBounds.center, $"{ID}");
+    }
+
+    public void SetNewID(int newID)
+    {
+        ID = newID;
     }
 
 }

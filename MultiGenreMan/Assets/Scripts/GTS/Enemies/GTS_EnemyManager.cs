@@ -9,6 +9,8 @@ public class GTS_EnemyManager : MonoBehaviour
 
     private Dictionary<int, GTS_Enemy> _enemyList;
 
+    private int _enemyTotalNr = 0;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -36,14 +38,33 @@ public class GTS_EnemyManager : MonoBehaviour
         
     }
 
+    private void FixedUpdate()
+    {
+        
+    }
+
     public void RegisterEnemy(int id, GTS_Enemy enemy)
     {
         if (!_enemyList.ContainsKey(id))
         {
             _enemyList.Add(id, enemy);
+            _enemyTotalNr++;
         }
 
 
     }
+
+    public void RemoveEnemy(int id)
+    {
+        if (_enemyList.ContainsKey(id))
+        {
+            _enemyList.Remove(id);
+            _enemyTotalNr--;
+        }
+
+
+    }
+
+
 
 }

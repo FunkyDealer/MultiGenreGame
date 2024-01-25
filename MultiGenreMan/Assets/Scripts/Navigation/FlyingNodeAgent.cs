@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -6,27 +7,26 @@ using UnityEngine.UI;
 
 public class FlyingNodeAgent : MonoBehaviour
 {
-    Node _currentNode = null;
-
     bool _moving = false;
     [SerializeField]
     float _stoppingDistance = 0.3f;
     [SerializeField]
     float _speed = 5;
 
-    Node _closestNode = null;
+    Node _currentNode = null;
     Node _nextNode = null;
     List<Node> _currentPath = new List<Node>();
 
     [SerializeField]
     Color _pathColor = Color.white;
 
+    [SerializeField]
+    NavigationManager _navigationManager;
+  
+
     // Start is called before the first frame update
     void Start()
     {
-
-        if (OctTreeManager.inst.NavGraph != null) GetCurrentNode();
-
         StartCoroutine(StartAreaPatrol());
     }
 
@@ -34,10 +34,7 @@ public class FlyingNodeAgent : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
 
-
-
         SelectDestinationAtRandom();
-
     }
 
     // Update is called once per frame
@@ -51,7 +48,6 @@ public class FlyingNodeAgent : MonoBehaviour
         //{
         //    SelectDestinationAtRandom();
         //}
-
     }
 
     private void FixedUpdate()
@@ -61,51 +57,53 @@ public class FlyingNodeAgent : MonoBehaviour
 
     void GetCurrentNode()
     {
-        _currentNode = OctTreeManager.inst.NavGraph.FindPositionInside(transform.position);
-
-        if (_currentNode != null)
-        {
-            //Debug.Log($"Agent is in node {_currentNode.ID}");
-        }
-        else
-        {
-           // Debug.Log("agent is not in node");
-        }
+        _currentNode = _navigationManager.Graph.FindClosestNode(transform.position);
     }
 
     void SelectDestinationAtRandom()
     {
-        GetCurrentNode();
-
         if (_currentNode == null)
         {
-            _closestNode = OctTreeManager.inst.NavGraph.FindClosestNodeTo(transform.position);
-            //Debug.Log($"Agent was not inside the tree, Moving to node {_closestNode.ID}");
+           GetCurrentNode();
+           //Debug.Log($"Agent was not inside the tree, Moving to node {_closestNode.ID}");
         }
         else
         {
-            _closestNode = null;
-            Node nextNode = OctTreeManager.inst.NavGraph.GetRandomNode();
+            Node nextNode = _navigationManager.Graph.GetRandomNode();
             //Debug.Log($"Agent Inside tree, Moving to node nr {nextNode.ID}");
 
-            PathFinding.AStarPathFind(_currentNode, nextNode, ref _currentPath);
-            //Debug.Log($"Current path has {_currentPath.Count} nodes");
-            _nextNode = _currentPath[0];
+            GetNextPathToNode(nextNode);
         }
 
         _moving = true;
     }
 
-    void MoveToNextNode()
+    void GetNextPathToNode(Node nextNode)
     {
-        if (_closestNode != null)
+        bool canGoStraight = PathFinding.CheckIfCanGoStraightToNextNode(transform.position,nextNode); //optimization measure, if the agent can just go straight into the next node, skip Astarpathfind
+
+        if (!canGoStraight)
         {
-            _nextNode = _closestNode;
+            PathFinding.AStarPathFind(_currentNode, nextNode, ref _currentPath);
+            //Debug.Log($"Current path has {_currentPath.Count} nodes");
+
+            //Reduce Path size by raycasting the nodes to see if they can traversed in a straight line
+            PathFinding.TryToReduceCurrentPath(transform.position, ref _currentPath);
+        }
+        else
+        {
+            _currentPath.Clear();
+            _currentPath.Add(nextNode);
         }
 
+        _nextNode = _currentPath[0];
+    }   
+
+    void MoveToNextNode()
+    {
         if (_nextNode != null)
         {
-            if ((_currentNode == null || _nextNode.ID != _currentNode.ID) && _nextNode.myBounds.Contains(transform.position)) _currentNode = _nextNode;
+            if ((_currentNode == null)) _currentNode = _nextNode;
 
             float distance = Vector3.Distance(transform.position, _nextNode.Pos);
 
@@ -113,64 +111,54 @@ public class FlyingNodeAgent : MonoBehaviour
             {
                 _currentNode = _nextNode;
 
-                if (_closestNode != null)
-                {
-                    _closestNode = null;
-                    _nextNode = null;
-                    //arrived
-                    _moving = false;
-                    SelectDestinationAtRandom();
-                } 
-                else
-                {
                     _currentPath.RemoveAt(0);
                     if (_currentPath.Count > 0)
                     {
+                        PathFinding.TryToReduceCurrentPath(transform.position, ref _currentPath);
                         _nextNode = _currentPath[0];
                     }
                     else
                     {
                         _moving = false;
                         SelectDestinationAtRandom();
-                    }
-                }                
+                    }                              
             }
             else
             {
-                //keep moving towards next node
-                //Vector3 direction = _nextNode.Pos - transform.position;
-                //direction.Normalize();
-
-                transform.position = Vector3.Lerp(transform.position, _nextNode.Pos, _speed * Time.deltaTime);
-
+                Locomotion();
             }
-
-
-
         }
         else
         {
-            
+            Debug.Log("finished Moving");
             _moving = false;
+            SelectDestinationAtRandom();
         }
+    }
 
+    private void Locomotion()
+    {
+        //keep moving towards next node
+        //Vector3 direction = _nextNode.Pos - transform.position;
+        //direction.Normalize();
 
+        transform.position = Vector3.Lerp(transform.position, _nextNode.Pos, _speed * Time.deltaTime);
     }
 
 
     private void OnDrawGizmos()
     {
-        //if (_currentPath.Count > 0)
-        //{
-        //    for (int i = 0; i < _currentPath.Count; i++)
-        //    {
-        //        if (i + 1 < _currentPath.Count) 
-        //        { 
-        //            Gizmos.color = _pathColor;
-        //            Gizmos.DrawLine(_currentPath[i].Pos, _currentPath[i + 1].Pos);
-        //        }
+        if (_currentPath.Count > 0)
+        {
+            for (int i = 0; i < _currentPath.Count; i++)
+            {
+                if (i + 1 < _currentPath.Count)
+                {
+                    Gizmos.color = _pathColor;
+                    Gizmos.DrawLine(_currentPath[i].Pos, _currentPath[i + 1].Pos);
+                }
 
-        //    }
-        //}
+            }
+        }
     }
 }

@@ -10,8 +10,12 @@ public class OctTree
     public Dictionary<int, OctTreeNode> NodesByID { get; private set; }
     public List<OctTreeNode> Emptyleafs { get; private set; }
 
-    public OctTree(GameObject[] worldObjects, float minNodeSize)
+    public OctTreeManager manager { get; private set; }
+
+    public OctTree(GameObject[] worldObjects, float minNodeSize, OctTreeManager manager)
     {
+
+        this.manager = manager;
         TotalNodes = 0;
         NodesByID = new Dictionary<int, OctTreeNode>();
         Bounds bounds = new Bounds();
@@ -26,7 +30,7 @@ public class OctTree
         //sizeVector *= 0.5f; //half it because it measures size from center of objects to edge
         //bounds.SetMinMax(bounds.center - sizeVector, bounds.center + sizeVector);
 
-        Vector3 size = OctTreeManager.inst.MyBoundsSize;
+        Vector3 size = this.manager.MyBoundsSize;
         bounds.size = size;
 
         float maxSize = Mathf.Max(new float[] { bounds.size.x, bounds.size.y, bounds.size.z });

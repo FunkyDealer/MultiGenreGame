@@ -119,4 +119,72 @@ public static class PathFinding
         }
         return iteratorCount;
     }
+
+    public static bool CheckIfCanGoStraightToNextNode(Vector3 agentPos ,Node nextNode)
+    {
+        float distance = Vector3.Distance(agentPos, nextNode.Pos);
+        Vector3 direction = nextNode.Pos - agentPos;
+        Ray ray = new Ray(agentPos, direction);
+        if (Physics.Raycast(ray, distance))
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public static void TryToReduceCurrentPath(Vector3 agentPos, ref List<Node> pathList)
+    {
+        List<Node> reversePath = new List<Node>(pathList);
+        reversePath.Reverse(); //reverse the list so that we can interate throught it in reverse order
+
+        Node nextNode = null; //next potentioal node
+
+        for (int i = 0; i < reversePath.Count; i++) //find a node that is not blocked by an obstacle
+        {
+            Vector3 direction = reversePath[i].Pos - agentPos;
+            float distance = Vector3.Distance(agentPos, reversePath[i].Pos);
+            Ray ray = new Ray(agentPos, direction);
+            if (Physics.Raycast(ray, distance))
+            {
+                continue; 
+            }
+            else
+            {
+                nextNode = reversePath[i]; //this node is the first node that isn't blocked, so we can remove all that come after (the agent can just do a straight line to this one)
+                break;
+            }
+        }
+
+        if (nextNode != null) //lets find out which position the node is in the original path, so that we can remove everything that come before it
+        {
+            int nodeNr = 0;
+
+            for (int i = 0; i < pathList.Count; i++)
+            {
+                if (pathList[i].ID == nextNode.ID)
+                {
+                    nodeNr = i;
+                    break;
+                }
+            }
+
+            //Debug.Log($"removing till {nodeNr}");
+            //Debug.Log($"current path has {_currentPath.Count} nodes");
+            for (int i = 0; i < nodeNr; i++) //remove every node that comes before the node that the agent can just fly straight to
+            {
+                //Debug.Log($"removing at position {i}");
+                pathList.RemoveAt(0); 
+            }
+        }
+        else
+        {
+            Debug.Log("nextNode was null");
+        }
+
+
+    }
+
 }

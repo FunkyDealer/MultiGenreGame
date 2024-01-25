@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -122,8 +123,6 @@ public class GTS_Player : GTS_Entity
     private Dictionary<string,GTS_Weapon> _ownedWeapons;
     public Dictionary<string, GTS_Weapon> Weapons => _ownedWeapons;
 
-
-
     [SerializeField]
     private int _maxStoredBullets;
     public int _currentBullets { get; private set; } = 0;
@@ -134,6 +133,15 @@ public class GTS_Player : GTS_Entity
     private int _maxStoredGrenades;
     public int _currentGrenades { get; private set; } = 0;
 
+    [SerializeField] GameObject _DeathUIPrefab;
+
+    [SerializeField] bool _invincible = false;
+    [SerializeField] bool _infiniteAmmo = false;
+
+    Dictionary<int, GTS_Enemy> _validLockOn = new Dictionary<int, GTS_Enemy>();
+    [SerializeField] float _lockOnMaxRange = 100;
+
+    private bool _lockOnMode = true;
 
     protected override void Awake()
     {
@@ -144,7 +152,8 @@ public class GTS_Player : GTS_Entity
 
         _offSet = new Vector3(_xOffset, _yOffset, -_zOffset);
 
-        _colliderSize = Vector3.Distance(transform.position, _front.position);
+        //_colliderSize = Vector3.Distance(transform.position, _front.position);
+        _colliderSize = _myCollider.bounds.size.x / 2;
         _flatDirection = Vector3.zero;
         _direction = Vector3.zero;
 
@@ -181,16 +190,15 @@ public class GTS_Player : GTS_Entity
             UpdateSecondaryAmmoUI();
         }
 
-
         GTS_PlayerUI.inst.UpdateHealthTextDisplay(_currentHealth);
+
+        GTS_PlayerUI.inst.LockOnModeSwitch(_lockOnMode);
     }
 
     // Update is called once per frame
     protected void Update()
     {
         ResetScene();
-
-        Pause();
 
         SetCamera();
 
@@ -250,20 +258,25 @@ public class GTS_Player : GTS_Entity
         GTS_DebugUi.inst.DebugLine("canRotate", $"can rotate?: {_canRotate}");
 
         GTS_DebugUi.inst.DebugLine("gravity", $"gravity: {_myRigidBody.useGravity}");
-    }
 
+        
+    }
 
     private void LateUpdate()
     {
         CameraUpdate();
     }
 
-
-
     //this function should always be in update
     //handles all inputs
     private void PlayerInput()
     {
+        if (_canPause && Input.GetKeyDown(KeyCode.Escape))
+        {
+            Pause();
+            return;
+        }
+
         //Use GetAxisRaw to get a more responsive input
         _mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
 
@@ -294,6 +307,16 @@ public class GTS_Player : GTS_Entity
         {
             _fpsMode = !_fpsMode;
             GTS_camera.inst.ResetFPSCamera();
+
+            if (_fpsMode) GTS_PlayerUI.inst.FPSMode();
+            else GTS_PlayerUI.inst.LockOnModeSwitch(_lockOnMode);
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            _lockOnMode = !_lockOnMode;
+            GTS_PlayerUI.inst.LockOnModeSwitch(_lockOnMode);            
+            if (!_lockOnMode) _validLockOn.Clear();
         }
     }
 
@@ -314,10 +337,25 @@ public class GTS_Player : GTS_Entity
 
         if (!_fpsMode)
         {
-            myForward = (_aimingPoint - _weaponRotControl.position).normalized;
-            myPrimaryForward = (_aimingPoint - _primaryArmRot.position).normalized;
-            mySecondaryForward = (_aimingPoint - _secondaryArmRot.position).normalized;
-            myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
+            if (_validLockOn.Count > 0)
+            {
+                int id = GetClosestEnemy();
+                Vector3 closest = _validLockOn[id].MyCenter;
+                myForward = (closest - _weaponRotControl.position).normalized;
+                myPrimaryForward = (closest - _primaryArmRot.position).normalized;
+                mySecondaryForward = (closest - _secondaryArmRot.position).normalized;
+                myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
+
+                GTS_PlayerUI.inst.LockOnToEnemy(id);
+            }
+            else
+            {
+                myForward = (_aimingPoint - _weaponRotControl.position).normalized;
+                myPrimaryForward = (_aimingPoint - _primaryArmRot.position).normalized;
+                mySecondaryForward = (_aimingPoint - _secondaryArmRot.position).normalized;
+                myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
+            }
+
         }
         else
         {
@@ -330,12 +368,37 @@ public class GTS_Player : GTS_Entity
         }
 
         Quaternion newRot = Quaternion.LookRotation(myForward, myUp);
-        Quaternion newPrimaryRot = Quaternion.LookRotation(myPrimaryForward, _primaryArmRot.up);
-        Quaternion newSecondaryRot = Quaternion.LookRotation(mySecondaryForward, _secondaryArmRot.up);
+        Quaternion newPrimaryRot = Quaternion.LookRotation(myPrimaryForward, myUp);
+        Quaternion newSecondaryRot = Quaternion.LookRotation(mySecondaryForward, myUp);
 
         _weaponRotControl.rotation = newRot;
         _primaryArmRot.rotation = newPrimaryRot;
         _secondaryArmRot.rotation = newSecondaryRot;
+    }
+
+    private int GetClosestEnemy()
+    {
+        int closest = _validLockOn.First().Key;
+        
+
+        if (_validLockOn.Count > 1)
+        {
+            float closestDist = Vector3.Distance(MyCenter, _validLockOn[closest].MyCenter);
+
+            foreach (var e in _validLockOn)
+            {
+                float dist = Vector3.Distance(MyCenter, e.Value.MyCenter);
+
+                if (dist < closestDist)
+                {
+                    closest = e.Key;
+                    closestDist = dist;
+                }
+            }
+        }
+
+
+        return closest;
     }
 
     private void Shoot()
@@ -368,7 +431,6 @@ public class GTS_Player : GTS_Entity
     //Player's Movement Input
     private void BodyMovement()
     {
-
         //if (!_isGrounded) _movementInput = Vector2.zero;
         //create movement vectors
         Vector3 horizontalDir = transform.right * _movementInput.x;
@@ -378,17 +440,20 @@ public class GTS_Player : GTS_Entity
         _flatDirection = _direction.normalized;
 
         bool rotate = false;
+        bool hole = false;
 
         if (_flatDirection.magnitude > 0f && !_rotating)
         {
-            bool hole = CheckForFallingCorner();
+            hole = CheckForFallingCorner();
 
-            if (!hole) rotate = CheckForWallInFront();
-            else rotate = true;
+            if (!hole)
+            {
+                rotate = CheckForWallInFront();
+            }
+            else rotate = true;            
         }
 
         if (rotate) _direction = Vector3.zero;
-
 
         if (!rotate && _groundStatus == GroundStatus.isGrounded && _jump)
         {
@@ -398,7 +463,8 @@ public class GTS_Player : GTS_Entity
         //conserve y speed so that fall speed is always the same
         Vector3 previousVelocity = _myRigidBody.velocity;
 
-        _direction *= _currentSpeed;
+        if (!rotate) _direction *= _currentSpeed;
+        //else _direction *= _movSpeed;
 
         if (_groundStatus != GroundStatus.jumping)
         {
@@ -429,9 +495,7 @@ public class GTS_Player : GTS_Entity
 
         //_direction = new Vector3(_direction.x, previousVelocity.y, _direction.z);
 
-        _myRigidBody.velocity = _direction;
-
-        
+        _myRigidBody.velocity = _direction;        
     }
 
     private void Jump()
@@ -517,6 +581,7 @@ public class GTS_Player : GTS_Entity
 
         //Vector3 pivot = transform.position - direction;
         Vector3 pivot = transform.TransformPoint(_myCollider.center);
+       // pivot = transform.position - _flatDirection.normalized * _colliderSize;
 
         float rayDistance = Mathf.Clamp(_distanceToground * 2 + 0.5f, 0, 2);
 
@@ -627,22 +692,12 @@ public class GTS_Player : GTS_Entity
     private void RotateToWall(RaycastHit hit, Vector3 pivot, bool up)
     {
         StopJumpCoroutines();
-        //Vector3 rotationVector = Vector3.Cross(-hit.normal.normalized, transform.up);
-        //rotationVector.Normalize();
 
         Vector3 rotationVector = Vector3.Cross(_flatDirection, transform.up);
         rotationVector.Normalize();
 
-        //Debug.Log($"rotation vector: {rotationVector}");
-
-        //float angle = Vector3.Angle(transform.up.normalized, hit.normal.normalized);
-        //StartCoroutine(RotatePlayerByPoint(rotPoint, rotationVector, 0, angle));
-
         //rotate with player input
         RotatePlayerByInput(pivot, rotationVector, up);
-
-        // _groundStatus = GroundStatus.isGrounded;
-        //StartCoroutine(RotateDelay());
     }
 
     IEnumerator RotatePlayerByPoint(Vector3 point, Vector3 rotationVector, float currentAngleDone, float totalAngle)
@@ -856,7 +911,6 @@ public class GTS_Player : GTS_Entity
 
     private void FixRotationForUpright()
     {
-
         float ammount = 3 * Time.deltaTime;
 
         Vector3 v = new Vector3(transform.forward.x, 0, transform.forward.z);
@@ -864,8 +918,6 @@ public class GTS_Player : GTS_Entity
         Quaternion rotation = Quaternion.LookRotation(v, Vector3.up);
 
         transform.rotation = Quaternion.Lerp(transform.rotation, rotation, ammount);
-
-
     }
 
     private void JumpDelay()
@@ -892,23 +944,34 @@ public class GTS_Player : GTS_Entity
         if (_fpsMode || (!_fpsMode && _cameraBlocked)) GTS_camera.inst.UpdateFPSCamera(transform, _FPSCameraTrans);
     }
 
-    public override void ReceiveDamage(int damage)
+    protected override void ReceiveDamage(int damage)
     {
-        base.ReceiveDamage(damage);
-
-        _currentHealth -= damage;
-
-        if (_currentHealth < 0)
+        if (_alive)
         {
-            _currentHealth = 0;
-            Die();
+            base.ReceiveDamage(damage);
+
+           if (!_invincible) _currentHealth -= damage;
+
+            if (_currentHealth < 0)
+            {
+                _currentHealth = 0;
+                Die();
+            }
+            GTS_PlayerUI.inst.UpdateHealthTextDisplay(_currentHealth);
         }
-        GTS_PlayerUI.inst.UpdateHealthTextDisplay(_currentHealth);
     }
 
     public override void ReceiveDamage(int damage, Vector3 contactPoint)
     {
         base.ReceiveDamage(damage, contactPoint);
+
+        Vector3 direction = contactPoint - transform.TransformPoint(_myCollider.center);
+        direction.Normalize();
+        direction = Vector3.ProjectOnPlane(direction, transform.up);
+        direction.Normalize();
+
+        //Debug.DrawLine(transform.position, transform.position + direction * 4, Color.magenta, 3);
+        GTS_PlayerUI.inst.DamageIndicator(transform, direction);
 
         ReceiveDamage(damage);
     }
@@ -917,11 +980,16 @@ public class GTS_Player : GTS_Entity
     {
         base.Die();
 
-        Debug.Log("You Died");
+       //Debug.Log("You Died");
 
         _inControl = false;
         _alive = false;
+        
+        _movementInput = Vector2.zero;
 
+        GTS_PlayerUI.inst.Deactivate();
+
+        Instantiate(_DeathUIPrefab);
     }
 
     float currentTimeScale = 1;
@@ -970,13 +1038,35 @@ public class GTS_Player : GTS_Entity
     }
     private void Pause()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (_inControl) Time.timeScale = 0;
-            else Time.timeScale = 1;
+             _canPause = false;
+            _paused = true;
+            Time.timeScale = 0;
 
-            _inControl = !_inControl;
-        }
+            _inControl = false;
+
+            GTS_PlayerUI.inst.Deactivate();
+            GTS_PauseMenu.inst.Pause(this);
+    }
+
+    public void Unpause()
+    {
+            Time.timeScale = 1;
+
+            GTS_PauseMenu.inst.UnPause();
+            GTS_PlayerUI.inst.Activate();
+            
+
+            _inControl = true;
+            _paused = false;
+
+        StartCoroutine(PauseTimer());
+    }
+
+    IEnumerator PauseTimer()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        _canPause = true;
     }
 
     void ResetScene()
@@ -1137,14 +1227,14 @@ public class GTS_Player : GTS_Entity
             case GTS_Weapon.AMMOTYPE.Bullets:
                 if (_currentBullets >= ammount)
                 {
-                    _currentBullets -= ammount;
+                   if (!_infiniteAmmo) _currentBullets -= ammount;
                     return true;
                 } 
                 break;
             case GTS_Weapon.AMMOTYPE.Rockets:
                 if (_currentRockets >= ammount)
                 {
-                    _currentRockets -= ammount;
+                    if (!_infiniteAmmo) _currentRockets -= ammount;
                     return true;
                 }
 
@@ -1152,7 +1242,7 @@ public class GTS_Player : GTS_Entity
                 case GTS_Weapon.AMMOTYPE.Grenades:
                 if (_currentGrenades >= ammount)
                 {
-                    _currentGrenades -= ammount;
+                    if (!_infiniteAmmo) _currentGrenades -= ammount;
                     return true;
                 }
                 break;
@@ -1161,4 +1251,56 @@ public class GTS_Player : GTS_Entity
         }
         return base.SpendAmmo(type, ammount);
     }
+
+    public void ReceivePosForLockOn(GTS_Enemy e, float dist, int id)
+    {
+        if (!_fpsMode && _lockOnMode && dist < _lockOnMaxRange)
+        {
+            Vector3 direction = e.MyCenter - transform.position;
+            direction.Normalize();
+
+            float angle = Vector3.Angle(direction, GTS_camera.inst.transform.forward);
+            if (angle < 50)
+            {
+                //raycheck to see if it's not blocked
+                Ray r = new Ray(MyCenter, direction);
+                RaycastHit hit;
+                if (Physics.Raycast(r, out hit, dist))
+                {
+                    if (hit.collider.gameObject.CompareTag("Enemy"))
+                    {
+                        Vector3 pos = Camera.main.WorldToScreenPoint(e.MyCenter);
+                        if (GTS_PlayerUI.inst.IsInLockBounds(pos))
+                        {
+                            AddEnemyToLockOn(e, pos, id);
+                            return;
+                        }
+                    }
+                }
+            }
+        }           
+        RemoveFromLockOn(id);
+    }
+
+    private void AddEnemyToLockOn(GTS_Enemy e, Vector3 pos, int id)
+    {
+        GTS_PlayerUI.inst.UpdateScreenEnemy(new Vector3(pos.x, pos.y, 0), id);
+        
+        if (!_validLockOn.ContainsKey(id))
+        {
+            _validLockOn.Add(id, e);
+        }
+    }
+
+    public void RemoveFromLockOn(int id)
+    {
+        if (_validLockOn.ContainsKey(id))
+        {
+            _validLockOn.Remove(id);
+           
+        }
+
+        GTS_PlayerUI.inst.RemoveEnemyFromScreen(id);
+    }
+
 }

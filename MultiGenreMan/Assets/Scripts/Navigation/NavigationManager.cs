@@ -2,24 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GTS_WalkingEnemy : GTS_Enemy
+public class NavigationManager : MonoBehaviour
 {
+    protected Graph _navGraph;
+    public Graph Graph => _navGraph;
+
     // Start is called before the first frame update
-    protected override void Start()
+    void Start()
     {
-        base.Start();
+        
     }
 
     // Update is called once per frame
     void Update()
     {
         
-    }
-
-    protected new void FixedUpdate()
-    {
-
-
-        base.FixedUpdate();
     }
 }

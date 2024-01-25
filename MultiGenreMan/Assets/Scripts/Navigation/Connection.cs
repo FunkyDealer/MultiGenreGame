@@ -31,8 +31,8 @@ public class Connection
         //Gizmos.DrawLine(StartNode.Pos, StartNode.Pos + (direction * (Weight / 2)) - direction);
         Gizmos.DrawLine(StartNode.Pos, EndNode.Pos);
 
-       // Gizmos.color = Color.black;
-       // UnityEditor.Handles.Label(StartNode.Pos + (direction * (Weight / 2) - direction), $"c{ID}");
+        Gizmos.color = Color.black;
+        UnityEditor.Handles.Label(StartNode.Pos + (direction * (Weight / 2) - direction), $"c{ID}");
     }
 
 

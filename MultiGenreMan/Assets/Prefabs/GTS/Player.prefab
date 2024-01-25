@@ -298,6 +298,8 @@ MonoBehaviour:
   _maxStoredBullets: 500
   _maxStoredRockets: 100
   _maxStoredGrenades: 100
+  _DeathUIPrefab: {fileID: 3608496915900751173, guid: 63d01a5ef52193148b382133c2dc641b, type: 3}
+  _invincible: 0
 --- !u!1 &4902524226196554541
 GameObject:
   m_ObjectHideFlags: 0

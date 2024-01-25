@@ -15,10 +15,13 @@ public class GTS_Entity : MonoBehaviour
 
     protected float _currentSpeed;
 
+    Collider myMainCollider;
+
+    public Vector3 MyCenter => myMainCollider.bounds.center;
 
     protected virtual void Awake()
     {
-
+        myMainCollider = GetComponent<Collider>();
     }
 
     // Start is called before the first frame update
@@ -34,7 +37,7 @@ public class GTS_Entity : MonoBehaviour
         
     }
 
-    public virtual void ReceiveDamage(int damage)
+    protected virtual void ReceiveDamage(int damage)
     {
 
     }

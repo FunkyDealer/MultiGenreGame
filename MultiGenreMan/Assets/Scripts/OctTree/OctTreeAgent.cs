@@ -14,6 +14,9 @@ public class OctTreeAgent : MonoBehaviour
     [SerializeField]
     float _speed = 5;
 
+    [SerializeField]
+    OctTreeManager _navigationManager;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -44,7 +47,7 @@ public class OctTreeAgent : MonoBehaviour
 
     void GetCurrentNode()
     {
-       _currentNode = OctTreeManager.inst.OctTree.FindPosition(transform.position);
+       _currentNode = _navigationManager.OctTree.FindPosition(transform.position);
 
         if (_currentNode != null)
         {
@@ -62,13 +65,13 @@ public class OctTreeAgent : MonoBehaviour
 
         if (_currentNode == null)
         {
-            _nextNode = OctTreeManager.inst.OctTree.FindClosestNodeTo(transform.position);
+            _nextNode = _navigationManager.OctTree.FindClosestNodeTo(transform.position);
           //  Debug.Log($"Agent was not inside the tree, Moving to node {_nextNode.ID}");
 
         }
         else
         {
-            _nextNode = OctTreeManager.inst.OctTree.GetRandomNode();
+            _nextNode = _navigationManager.OctTree.GetRandomNode();
             //Debug.Log($"Agent Inside tree, Moving to node nr {_nextNode.ID}");
         }
 

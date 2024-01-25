@@ -22,7 +22,7 @@ public class OctTreeNode
         this.myBounds = b;
         this.minSize = minNodeSize;
 
-        if (this.myBounds.center.y < OctTreeManager.inst.Floor.position.y + OctTreeManager.inst.FloorExtraHeight) occupied = true; //sets all nodes close or under the floor as occupied
+        if (this.myBounds.center.y < myTree.manager.Floor.position.y + myTree.manager.FloorExtraHeight) occupied = true; //sets all nodes close or under the floor as occupied
 
         Vector3 quarter = myBounds.size / 4.0f;
         Vector3 childLenght = myBounds.size / 2;
