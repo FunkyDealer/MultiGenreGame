@@ -8189,6 +8189,22 @@ PrefabInstance:
       value: 0.754717
       objectReference: {fileID: 0}
     - target: {fileID: 5146934160836476197, guid: 826c4fb97a2bac74fa388138169fa518, type: 3}
+      propertyPath: _lockingOnColor.a
+      value: 0.29803923
+      objectReference: {fileID: 0}
+    - target: {fileID: 5146934160836476197, guid: 826c4fb97a2bac74fa388138169fa518, type: 3}
+      propertyPath: _lockingOnColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5146934160836476197, guid: 826c4fb97a2bac74fa388138169fa518, type: 3}
+      propertyPath: _lockingOnColor.g
+      value: 0.7075472
+      objectReference: {fileID: 0}
+    - target: {fileID: 5146934160836476197, guid: 826c4fb97a2bac74fa388138169fa518, type: 3}
+      propertyPath: _lockingOnColor.r
+      value: 0.6898872
+      objectReference: {fileID: 0}
+    - target: {fileID: 5146934160836476197, guid: 826c4fb97a2bac74fa388138169fa518, type: 3}
       propertyPath: _notLockedOnColor.a
       value: 0.29803923
       objectReference: {fileID: 0}

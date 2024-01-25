@@ -77,7 +77,7 @@ public class GTS_Enemy : GTS_Entity
 
     protected virtual void SendPosForLockOn()
     {
-        float dist = Vector3.Distance(GTS_GameManager.inst.Player.transform.position, this.transform.position);
+        float dist = Vector3.Distance(GTS_GameManager.inst.Player.MyCenter, this.MyCenter);
         GTS_GameManager.inst.Player.ReceivePosForLockOn(this, dist, this.gameObject.GetInstanceID());
 
     }

@@ -32,7 +32,7 @@ public class GTS_PlayerUI : MonoBehaviour
 
     [SerializeField] private Color _lockedOnColor;
     [SerializeField] private Color _notLockedOnColor;
-
+    [SerializeField] private Color _lockingOnColor;
 
 
     private void Awake()
@@ -241,6 +241,19 @@ public class GTS_PlayerUI : MonoBehaviour
             enemies.Remove(id);
 
             Destroy(o.Item1.gameObject);
+        }
+    }
+
+    public void StartLockingOnEnemy(int id)
+    {
+        foreach (var i in enemies)
+        {
+            if (i.Key == id) i.Value.Item2.color = _lockingOnColor;
+
+            else
+            {
+                i.Value.Item2.color = _notLockedOnColor;
+            }
         }
     }
 

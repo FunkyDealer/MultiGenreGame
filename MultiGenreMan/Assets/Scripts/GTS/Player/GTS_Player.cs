@@ -142,6 +142,7 @@ public class GTS_Player : GTS_Entity
     [SerializeField] float _lockOnMaxRange = 100;
 
     private bool _lockOnMode = true;
+    private Tuple<int,GTS_Enemy> _lockedOnEnemy = null;
 
     protected override void Awake()
     {
@@ -232,6 +233,9 @@ public class GTS_Player : GTS_Entity
         FindFloor();
 
         CheckUpright();
+
+        ValidateCurrentLockOn();
+        TryToLockOn();
 
         BodyMovement();
 
@@ -337,16 +341,13 @@ public class GTS_Player : GTS_Entity
 
         if (!_fpsMode)
         {
-            if (_validLockOn.Count > 0)
-            {
-                int id = GetClosestEnemy();
-                Vector3 closest = _validLockOn[id].MyCenter;
+            if (_lockedOnEnemy != null && _lockedOnEnemy.Item2)
+            {                
+                Vector3 closest = _lockedOnEnemy.Item2.MyCenter;
                 myForward = (closest - _weaponRotControl.position).normalized;
                 myPrimaryForward = (closest - _primaryArmRot.position).normalized;
                 mySecondaryForward = (closest - _secondaryArmRot.position).normalized;
                 myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
-
-                GTS_PlayerUI.inst.LockOnToEnemy(id);
             }
             else
             {
@@ -1256,14 +1257,14 @@ public class GTS_Player : GTS_Entity
     {
         if (!_fpsMode && _lockOnMode && dist < _lockOnMaxRange)
         {
-            Vector3 direction = e.MyCenter - transform.position;
+            Vector3 direction = e.MyCenter - MyCenter;
             direction.Normalize();
 
             float angle = Vector3.Angle(direction, GTS_camera.inst.transform.forward);
             if (angle < 50)
             {
                 //raycheck to see if it's not blocked
-                Ray r = new Ray(MyCenter, direction);
+                Ray r = new Ray(MyCenter,direction);
                 RaycastHit hit;
                 if (Physics.Raycast(r, out hit, dist))
                 {
@@ -1296,11 +1297,46 @@ public class GTS_Player : GTS_Entity
     {
         if (_validLockOn.ContainsKey(id))
         {
-            _validLockOn.Remove(id);
-           
+            _validLockOn.Remove(id);           
         }
 
         GTS_PlayerUI.inst.RemoveEnemyFromScreen(id);
     }
+
+    private void TryToLockOn()
+    {
+        if (_lockedOnEnemy == null && _validLockOn.Count > 0)
+        {
+            StopCoroutine(LockOnDelay(0));
+           int closest = GetClosestEnemy();
+
+            GTS_PlayerUI.inst.StartLockingOnEnemy(closest);
+            StartCoroutine(LockOnDelay(closest));
+        }
+    }
+
+    private void ValidateCurrentLockOn()
+    {
+        if (_lockedOnEnemy != null && !_validLockOn.ContainsKey(_lockedOnEnemy.Item1))
+        {
+            _lockedOnEnemy = null;
+            GTS_PlayerUI.inst.UnLockEveryone();
+        }
+    }
+
+    private IEnumerator LockOnDelay(int id)
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        if (_validLockOn.ContainsKey(id))
+        {
+            GTS_PlayerUI.inst.LockOnToEnemy(id);
+
+            Tuple<int, GTS_Enemy> t = new Tuple<int, GTS_Enemy>(id, _validLockOn[id]);
+            _lockedOnEnemy = t;
+        }
+    }
+
+
 
 }
