@@ -57,7 +57,7 @@ public class GTS_Player : GTS_Entity
     Vector3 _jumpForce = Vector3.zero;
 
     private Rigidbody _myRigidBody;
-    private BoxCollider _myCollider;
+    private Collider _myCollider;
 
     private Vector2 _mouseInput = Vector2.zero;
     private Vector2 _movementInput = Vector2.zero;
@@ -83,7 +83,6 @@ public class GTS_Player : GTS_Entity
 
     [SerializeField]
     private Transform _front;
-    private float _colliderSize;
 
     private bool _canRotateUp = true;
     private bool _canRotateDown = true;
@@ -149,12 +148,11 @@ public class GTS_Player : GTS_Entity
         base.Awake();
 
         _myRigidBody = GetComponent<Rigidbody>();
-        _myCollider = GetComponent<BoxCollider>();
+        _myCollider = GetComponent<Collider>();
 
         _offSet = new Vector3(_xOffset, _yOffset, -_zOffset);
 
         //_colliderSize = Vector3.Distance(transform.position, _front.position);
-        _colliderSize = _myCollider.bounds.size.x / 2;
         _flatDirection = Vector3.zero;
         _direction = Vector3.zero;
 
@@ -454,7 +452,16 @@ public class GTS_Player : GTS_Entity
             else rotate = true;            
         }
 
-        if (rotate) _direction = Vector3.zero;
+       // if (rotate) _direction = Vector3.zero;
+
+        if (rotate)
+        {
+            horizontalDir = transform.right * _movementInput.x;
+            verticalDir = transform.forward * _movementInput.y;
+
+            _direction = (horizontalDir + verticalDir);
+            _flatDirection = _direction.normalized;
+        }
 
         if (!rotate && _groundStatus == GroundStatus.isGrounded && _jump)
         {
@@ -464,7 +471,8 @@ public class GTS_Player : GTS_Entity
         //conserve y speed so that fall speed is always the same
         Vector3 previousVelocity = _myRigidBody.velocity;
 
-        if (!rotate) _direction *= _currentSpeed;
+        _direction *= _currentSpeed;
+        if (hole) _direction *= 0;
         //else _direction *= _movSpeed;
 
         if (_groundStatus != GroundStatus.jumping)
@@ -568,24 +576,28 @@ public class GTS_Player : GTS_Entity
         //if (_groundStatus == GroundStatus.falling) return false;
 
         Vector3 direction = _flatDirection.normalized;
-        direction = direction * _colliderSize;
+        direction = direction * 2.5f;
+        //direction = direction;
 
         float extraHeight = _distanceToground / 3f;
         float lessRange = _distanceToground / 3;
         extraHeight = Mathf.Clamp(extraHeight, 0, 0.5f);
         lessRange = Mathf.Clamp(lessRange, 0, 1f);
 
-        Vector3 place = (transform.position + transform.up * 0.1f) + direction - (transform.up * extraHeight) - (direction.normalized * lessRange);
+        Vector3 place = (transform.position + transform.up * 0.1f) - (transform.up * extraHeight) - (direction.normalized * lessRange);
+        //place = transform.position + direction * _colliderSize;
         //direction.Normalize();
 
         GTS_DebugUi.inst.DebugLine("distanceToGround", $"distanceToGround: {_distanceToground}");
 
         //Vector3 pivot = transform.position - direction;
-        Vector3 pivot = transform.TransformPoint(_myCollider.center);
+        Vector3 pivot = _myCollider.bounds.center;
        // pivot = transform.position - _flatDirection.normalized * _colliderSize;
 
-        float rayDistance = Mathf.Clamp(_distanceToground * 2 + 0.5f, 0, 2);
+        float rayDistance = Mathf.Clamp(_distanceToground * 2 + 0.5f, 0, 2.5f);
+        rayDistance = 1.5f;
 
+        direction.Normalize();
         RaycastHit hit;
         if (Physics.Raycast(place, direction, out hit, rayDistance, ~_ignoreLayerMask)) //There is something blocking us
         {
@@ -593,12 +605,14 @@ public class GTS_Player : GTS_Entity
             Debug.DrawLine(place, place + direction * rayDistance, Color.green);
 
             RotateToWall(hit, pivot, true); //rotate into it
+            //Vector3 normal = (hit.normal + transform.up) / 2;
+            //RotateTowardsNormal(normal.normalized);
             RotateDownDelay();
             return true;
         }
         else
         {
-            Debug.DrawLine(place, place + direction * .5f, Color.red);
+            Debug.DrawLine(place, place + direction * rayDistance, Color.red);
 
             //if (_groundStatus == GroundStatus.isGrounded && !_sprinting) return CheckForFallingCorner();
             //else return false;            
@@ -615,7 +629,7 @@ public class GTS_Player : GTS_Entity
         if (_distanceToground > 1) return false;
 
         //cast 2 rays
-        Vector3 myCenter = transform.TransformPoint(_myCollider.center);
+        Vector3 myCenter = _myCollider.bounds.center;
 
         Vector3 groundCheckTarget = transform.position + (_flatDirection.normalized * 0.55f);
         Vector3 groundCheckDir = groundCheckTarget - myCenter;
@@ -698,7 +712,34 @@ public class GTS_Player : GTS_Entity
         rotationVector.Normalize();
 
         //rotate with player input
-        RotatePlayerByInput(pivot, rotationVector, up);
+        RotatePlayerByInput(pivot, rotationVector, up, hit.normal);
+    }
+
+    void RotateTowardsNormal(Vector3 Normal)
+    {
+        // We will calculate a forward vector based on the model rotation, the normal and the camera
+        // CameraRelativePitch is used to keep the camera from locking up when looking directly up/down
+        Vector3 CamForward = GTS_camera.inst.transform.forward;
+        Vector3 ModelUp = transform.up;
+        Vector3 ModelForward = transform.forward;
+
+        // We want to align our forward vector with the plane given by the normal
+        Vector3 PlaneForward = Vector3.ProjectOnPlane(ModelForward, Normal).normalized;
+
+        // We also want to flatten our forward vector against the plane defined by the model's pitch axis
+        // This prevents the model from turning sideways (on its yaw axis)
+        Vector3 PitchAxis = Vector3.Cross(ModelForward, ModelUp).normalized;
+        Vector3 FinalForward = Vector3.ProjectOnPlane(PlaneForward, PitchAxis);
+
+        // Calculate the rotation given by our forward vector and the normal (interpreted as up)
+        Vector3 O = transform.position;
+       // FQuat LookAtQuat = FindLookAtQuat(O, O + FinalForward * 1000, Normal);
+        Quaternion LookAtQuat = Quaternion.LookRotation(FinalForward, Normal);
+
+        // Apply the rotation to RootComponent
+        Quaternion RootQuat = transform.rotation;
+        Quaternion FinalQuat =  Quaternion.Slerp(RootQuat, LookAtQuat, Mathf.Min(1, 10 * Time.deltaTime));
+        transform.rotation = FinalQuat;
     }
 
     IEnumerator RotatePlayerByPoint(Vector3 point, Vector3 rotationVector, float currentAngleDone, float totalAngle)
@@ -756,7 +797,11 @@ public class GTS_Player : GTS_Entity
 
     }
 
-    void RotatePlayerByInput(Vector3 pivot, Vector3 rotationVector, bool up)
+    [SerializeField, Range(0f, 100f)] float _minRotSpeed = 0;
+    [SerializeField, Range(0f, 100f)] float _maxRotSpeed = 50;
+
+
+    void RotatePlayerByInput(Vector3 pivot, Vector3 rotationVector, bool up, Vector3 TargetNormal)
     {
         //_myRigidBody.useGravity = false;
         // _rotating = true;
@@ -767,9 +812,10 @@ public class GTS_Player : GTS_Entity
 
         //_groundStatus = GroundStatus.isGrounded;
 
-        float ammount = 90 * _rotationSpeed * Time.deltaTime;
+        float ammount = 80 * _rotationSpeed * Time.deltaTime;
 
         transform.RotateAround(pivot, rotationVector, ammount * Up);
+
     }
 
     void RotateDownDelay()
@@ -966,7 +1012,7 @@ public class GTS_Player : GTS_Entity
     {
         base.ReceiveDamage(damage, contactPoint);
 
-        Vector3 direction = contactPoint - transform.TransformPoint(_myCollider.center);
+        Vector3 direction = contactPoint - _myCollider.bounds.center;
         direction.Normalize();
         direction = Vector3.ProjectOnPlane(direction, transform.up);
         direction.Normalize();
