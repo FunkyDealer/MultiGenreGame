@@ -100,6 +100,8 @@ public class GTS_PlayerUI : MonoBehaviour
 
     public void Deactivate()
     {
+        StopAllCoroutines();
+        enemies.Clear();
         this.gameObject.SetActive(false);
     }
 

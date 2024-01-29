@@ -143,6 +143,9 @@ public class GTS_Player : GTS_Entity
     private bool _lockOnMode = true;
     private Tuple<int,GTS_Enemy> _lockedOnEnemy = null;
 
+    [SerializeField]
+    private float _lockOnThroughWallMaxRange = 50;
+
     protected override void Awake()
     {
         base.Awake();
@@ -269,6 +272,8 @@ public class GTS_Player : GTS_Entity
         CameraUpdate();
     }
 
+    #region input
+
     //this function should always be in update
     //handles all inputs
     private void PlayerInput()
@@ -330,103 +335,9 @@ public class GTS_Player : GTS_Entity
 
     }
 
-    private void AimWeapons()
-    {
-        Vector3 myForward = _weaponRotControl.forward;
-        Vector3 myPrimaryForward = _primaryArmRot.forward;
-        Vector3 mySecondaryForward = _secondaryArmRot.forward;
-        Vector3 myUp = _weaponRotControl.up;    
+    #endregion
 
-        if (!_fpsMode)
-        {
-            if (_lockedOnEnemy != null && _lockedOnEnemy.Item2)
-            {                
-                Vector3 closest = _lockedOnEnemy.Item2.MyCenter;
-                myForward = (closest - _weaponRotControl.position).normalized;
-                myPrimaryForward = (closest - _primaryArmRot.position).normalized;
-                mySecondaryForward = (closest - _secondaryArmRot.position).normalized;
-                myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
-            }
-            else
-            {
-                myForward = (_aimingPoint - _weaponRotControl.position).normalized;
-                myPrimaryForward = (_aimingPoint - _primaryArmRot.position).normalized;
-                mySecondaryForward = (_aimingPoint - _secondaryArmRot.position).normalized;
-                myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
-            }
-
-        }
-        else
-        {
-            Vector3 lookPoint = GTS_camera.inst.transform.position + GTS_camera.inst.transform.forward * 1000;
-
-            myForward = (lookPoint - _weaponRotControl.position).normalized;
-            myPrimaryForward = (lookPoint - _primaryArmRot.position).normalized;
-            mySecondaryForward = (lookPoint - _secondaryArmRot.position).normalized;
-            myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
-        }
-
-        Quaternion newRot = Quaternion.LookRotation(myForward, myUp);
-        Quaternion newPrimaryRot = Quaternion.LookRotation(myPrimaryForward, myUp);
-        Quaternion newSecondaryRot = Quaternion.LookRotation(mySecondaryForward, myUp);
-
-        _weaponRotControl.rotation = newRot;
-        _primaryArmRot.rotation = newPrimaryRot;
-        _secondaryArmRot.rotation = newSecondaryRot;
-    }
-
-    private int GetClosestEnemy()
-    {
-        int closest = _validLockOn.First().Key;
-        
-
-        if (_validLockOn.Count > 1)
-        {
-            float closestDist = Vector3.Distance(MyCenter, _validLockOn[closest].MyCenter);
-
-            foreach (var e in _validLockOn)
-            {
-                float dist = Vector3.Distance(MyCenter, e.Value.MyCenter);
-
-                if (dist < closestDist)
-                {
-                    closest = e.Key;
-                    closestDist = dist;
-                }
-            }
-        }
-
-
-        return closest;
-    }
-
-    private void Shoot()
-    {
-        if (_currentlySelectedPrimary != null)
-        {
-            if (_currentlySelectedPrimary.CanShoot && _firingPrimary)
-            {
-                _currentlySelectedPrimary.Shoot();
-
-                UpdatePrimaryAmmoUI();
-            }
-        }
-
-        if (_currentlySelectedSecondary != null) {
-            if (_currentlySelectedSecondary.CanShoot && _firingSecondary)
-            {
-
-                _currentlySelectedSecondary.Shoot();
-
-                UpdateSecondaryAmmoUI();
-            }
-        }
-
-        _firingPrimary = false;
-        _firingSecondary = false;
-    }
-
-
+    #region Movement
     //Player's Movement Input
     private void BodyMovement()
     {
@@ -688,7 +599,7 @@ public class GTS_Player : GTS_Entity
 
                     //we found it! rotate!
                     FloatingTexTManager.inst.CreateText(transform.position, $"the is a hole", 0);
-                    RotateToWall(wallCheck, wallCheck.point, false);
+                    RotateToWall(wallCheck.point, false);
 
                     RotateUpDelay();
                     return true;
@@ -704,6 +615,17 @@ public class GTS_Player : GTS_Entity
         return false;
     }
 
+    private void RotateToWall(Vector3 pivot, bool up)
+    {
+        StopJumpCoroutines();
+
+        Vector3 rotationVector = Vector3.Cross(_flatDirection, transform.up);
+        rotationVector.Normalize();
+
+        //rotate with player input
+        RotatePlayerByInput(pivot, rotationVector, up);
+    }
+
     private void RotateToWall(RaycastHit hit, Vector3 pivot, bool up)
     {
         StopJumpCoroutines();
@@ -713,33 +635,6 @@ public class GTS_Player : GTS_Entity
 
         //rotate with player input
         RotatePlayerByInput(pivot, rotationVector, up, hit.normal);
-    }
-
-    void RotateTowardsNormal(Vector3 Normal)
-    {
-        // We will calculate a forward vector based on the model rotation, the normal and the camera
-        // CameraRelativePitch is used to keep the camera from locking up when looking directly up/down
-        Vector3 CamForward = GTS_camera.inst.transform.forward;
-        Vector3 ModelUp = transform.up;
-        Vector3 ModelForward = transform.forward;
-
-        // We want to align our forward vector with the plane given by the normal
-        Vector3 PlaneForward = Vector3.ProjectOnPlane(ModelForward, Normal).normalized;
-
-        // We also want to flatten our forward vector against the plane defined by the model's pitch axis
-        // This prevents the model from turning sideways (on its yaw axis)
-        Vector3 PitchAxis = Vector3.Cross(ModelForward, ModelUp).normalized;
-        Vector3 FinalForward = Vector3.ProjectOnPlane(PlaneForward, PitchAxis);
-
-        // Calculate the rotation given by our forward vector and the normal (interpreted as up)
-        Vector3 O = transform.position;
-       // FQuat LookAtQuat = FindLookAtQuat(O, O + FinalForward * 1000, Normal);
-        Quaternion LookAtQuat = Quaternion.LookRotation(FinalForward, Normal);
-
-        // Apply the rotation to RootComponent
-        Quaternion RootQuat = transform.rotation;
-        Quaternion FinalQuat =  Quaternion.Slerp(RootQuat, LookAtQuat, Mathf.Min(1, 10 * Time.deltaTime));
-        transform.rotation = FinalQuat;
     }
 
     IEnumerator RotatePlayerByPoint(Vector3 point, Vector3 rotationVector, float currentAngleDone, float totalAngle)
@@ -812,10 +707,29 @@ public class GTS_Player : GTS_Entity
 
         //_groundStatus = GroundStatus.isGrounded;
 
-        float ammount = 80 * _rotationSpeed * Time.deltaTime;
+        float angle = Vector3.Angle(transform.up, TargetNormal);
+
+        float ammount = angle * _rotationSpeed * Time.deltaTime;
+
+        ammount = Mathf.LerpAngle(ammount, angle, Mathf.Min(1, _rotationSpeed * Time.deltaTime));
 
         transform.RotateAround(pivot, rotationVector, ammount * Up);
+    }
 
+    void RotatePlayerByInput(Vector3 pivot, Vector3 rotationVector, bool up)
+    {
+        //_myRigidBody.useGravity = false;
+        // _rotating = true;
+        _upright = false;
+
+        float Up = -1;
+        if (up) Up = 1;
+
+        //_groundStatus = GroundStatus.isGrounded
+
+        float ammount = 90 * _rotationSpeed * Time.deltaTime;
+
+        transform.RotateAround(pivot, rotationVector, ammount * Up);
     }
 
     void RotateDownDelay()
@@ -933,7 +847,6 @@ public class GTS_Player : GTS_Entity
         else _upright = false;
 
         GTS_DebugUi.inst.DebugLine("Upright", $"Upright: {_upright}");
-
     }
 
     private void FixRotation()
@@ -983,6 +896,7 @@ public class GTS_Player : GTS_Entity
     {
         transform.rotation *= Quaternion.Euler(_mouseInput.x * _sensitivity * _horizontalRotationSpeed * Time.deltaTime * Vector3.up);
     }
+    #endregion
 
     private void CameraUpdate()
     {
@@ -991,6 +905,7 @@ public class GTS_Player : GTS_Entity
         if (_fpsMode || (!_fpsMode && _cameraBlocked)) GTS_camera.inst.UpdateFPSCamera(transform, _FPSCameraTrans);
     }
 
+    #region Damage&Health
     protected override void ReceiveDamage(int damage)
     {
         if (_alive)
@@ -1039,6 +954,18 @@ public class GTS_Player : GTS_Entity
         Instantiate(_DeathUIPrefab);
     }
 
+    public bool AddHealth(int ammount)
+    {
+        if (_currentHealth >= _maxHealth) return false;
+
+        _currentHealth += ammount;
+        if (_currentHealth > _maxHealth) _currentHealth = _maxHealth;
+        GTS_PlayerUI.inst.UpdateHealthTextDisplay(_currentHealth);
+        return true;
+    }
+    #endregion
+
+    #region debug
     float currentTimeScale = 1;
 
     private void SetTime()
@@ -1121,6 +1048,8 @@ public class GTS_Player : GTS_Entity
         if (Input.GetKeyDown(KeyCode.P)) SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+    #endregion
+
     Vector3 GetTangent(Vector3 normal)
     {
         Vector3 tangent = Vector3.Cross(normal, Vector3.forward); ;
@@ -1137,14 +1066,102 @@ public class GTS_Player : GTS_Entity
         }
     }
 
-    public bool AddHealth(int ammount)
+    #region Weapons
+    private void AimWeapons()
     {
-        if (_currentHealth >= _maxHealth) return false;
+        Vector3 myForward = _weaponRotControl.forward;
+        Vector3 myPrimaryForward = _primaryArmRot.forward;
+        Vector3 mySecondaryForward = _secondaryArmRot.forward;
+        Vector3 myUp = _weaponRotControl.up;
 
-        _currentHealth += ammount;
-        if (_currentHealth > _maxHealth) _currentHealth = _maxHealth;
-        GTS_PlayerUI.inst.UpdateHealthTextDisplay(_currentHealth);
-        return true;
+        if (!_fpsMode)
+        {
+            if (_lockedOnEnemy != null && _lockedOnEnemy.Item2)
+            {
+                Vector3 closest = _lockedOnEnemy.Item2.MyCenter;
+                myForward = (closest - _weaponRotControl.position).normalized;
+                myPrimaryForward = (closest - _primaryArmRot.position).normalized;
+                mySecondaryForward = (closest - _secondaryArmRot.position).normalized;
+                myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
+            }
+            else
+            {
+                myForward = (_aimingPoint - _weaponRotControl.position).normalized;
+                myPrimaryForward = (_aimingPoint - _primaryArmRot.position).normalized;
+                mySecondaryForward = (_aimingPoint - _secondaryArmRot.position).normalized;
+                myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
+            }
+
+        }
+        else
+        {
+            Vector3 lookPoint = GTS_camera.inst.transform.position + GTS_camera.inst.transform.forward * 1000;
+
+            myForward = (lookPoint - _weaponRotControl.position).normalized;
+            myPrimaryForward = (lookPoint - _primaryArmRot.position).normalized;
+            mySecondaryForward = (lookPoint - _secondaryArmRot.position).normalized;
+            myUp = Vector3.Cross(myForward, GTS_camera.inst.transform.right);
+        }
+
+        Quaternion newRot = Quaternion.LookRotation(myForward, myUp);
+        Quaternion newPrimaryRot = Quaternion.LookRotation(myPrimaryForward, myUp);
+        Quaternion newSecondaryRot = Quaternion.LookRotation(mySecondaryForward, myUp);
+
+        _weaponRotControl.rotation = newRot;
+        _primaryArmRot.rotation = newPrimaryRot;
+        _secondaryArmRot.rotation = newSecondaryRot;
+    }
+
+    private int GetClosestEnemy()
+    {
+        int closest = _validLockOn.First().Key;
+
+
+        if (_validLockOn.Count > 1)
+        {
+            float closestDist = Vector3.Distance(MyCenter, _validLockOn[closest].MyCenter);
+
+            foreach (var e in _validLockOn)
+            {
+                float dist = Vector3.Distance(MyCenter, e.Value.MyCenter);
+
+                if (dist < closestDist)
+                {
+                    closest = e.Key;
+                    closestDist = dist;
+                }
+            }
+        }
+
+
+        return closest;
+    }
+
+    private void Shoot()
+    {
+        if (_currentlySelectedPrimary != null)
+        {
+            if (_currentlySelectedPrimary.CanShoot && _firingPrimary)
+            {
+                _currentlySelectedPrimary.Shoot();
+
+                UpdatePrimaryAmmoUI();
+            }
+        }
+
+        if (_currentlySelectedSecondary != null)
+        {
+            if (_currentlySelectedSecondary.CanShoot && _firingSecondary)
+            {
+
+                _currentlySelectedSecondary.Shoot();
+
+                UpdateSecondaryAmmoUI();
+            }
+        }
+
+        _firingPrimary = false;
+        _firingSecondary = false;
     }
 
     public void PickUpWeapon(GTS_Weapon weapon)
@@ -1309,19 +1326,31 @@ public class GTS_Player : GTS_Entity
             float angle = Vector3.Angle(direction, GTS_camera.inst.transform.forward);
             if (angle < 50)
             {
-                //raycheck to see if it's not blocked
-                Ray r = new Ray(MyCenter,direction);
-                RaycastHit hit;
-                if (Physics.Raycast(r, out hit, dist))
+                if (dist > _lockOnThroughWallMaxRange)
                 {
-                    if (hit.collider.gameObject.CompareTag("Enemy"))
+                    //raycheck to see if it's not blocked
+                    Ray r = new Ray(MyCenter, direction);
+                    RaycastHit hit;
+                    if (Physics.Raycast(r, out hit, dist))
                     {
-                        Vector3 pos = Camera.main.WorldToScreenPoint(e.MyCenter);
-                        if (GTS_PlayerUI.inst.IsInLockBounds(pos))
+                        if (hit.collider.gameObject.CompareTag("Enemy"))
                         {
-                            AddEnemyToLockOn(e, pos, id);
-                            return;
+                            Vector3 pos = Camera.main.WorldToScreenPoint(e.MyCenter);
+                            if (GTS_PlayerUI.inst.IsInLockBounds(pos))
+                            {
+                                AddEnemyToLockOn(e, pos, id);
+                                return;
+                            }
                         }
+                    }
+                }
+                else
+                {
+                    Vector3 pos = Camera.main.WorldToScreenPoint(e.MyCenter);
+                    if (GTS_PlayerUI.inst.IsInLockBounds(pos))
+                    {
+                        AddEnemyToLockOn(e, pos, id);
+                        return;
                     }
                 }
             }
@@ -1383,6 +1412,7 @@ public class GTS_Player : GTS_Entity
         }
     }
 
+    #endregion
 
 
 }
